@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  template-gates:
+    name: Template gates (TypeScript strict)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: template
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: template/package-lock.json
+      - run: npm ci
+      - run: npm run gates
+
+  example-gates-and-verify:
+    name: Example app gates and browser verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: examples/tiny-notes
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Gates
+        run: sh scripts/gates.sh
+      - name: Drive the running app in headless Chrome
+        run: node tools/verify/drive.mjs all
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-evidence
+          path: examples/tiny-notes/.verify-evidence/
+          include-hidden-files: true
+          if-no-files-found: warn

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tiny Notes</title>
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 32rem; margin: 2rem auto; padding: 0 1rem; }
+      form { display: flex; gap: 0.5rem; }
+      input { flex: 1; padding: 0.5rem; }
+      ul { list-style: none; padding: 0; }
+      li { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #ddd; }
+      header { display: flex; align-items: center; justify-content: space-between; }
+      [data-theme="dark"] { background: #111; color: #eee; }
+      [data-theme="dark"] input { background: #222; color: #eee; border: 1px solid #444; }
+      [data-theme="dark"] button { background: #333; color: #eee; border: 1px solid #555; }
+      [data-theme="dark"] li { border-bottom-color: #444; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Tiny Notes</h1>
+      <button id="theme-toggle" type="button"></button>
+    </header>
+    <form id="new-note">
+      <input id="text" placeholder="Write a note" autocomplete="off" />
+      <button>Add</button>
+    </form>
+    <ul id="notes"></ul>
+    <script type="module">
+      const list = document.querySelector("#notes");
+      const form = document.querySelector("#new-note");
+      const input = document.querySelector("#text");
+      const root = document.documentElement;
+      const themeToggle = document.querySelector("#theme-toggle");
+
+      function activeTheme() {
+        const stored = localStorage.getItem("theme");
+        if (stored === "light" || stored === "dark") return stored;
+        return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+
+      function applyTheme(theme) {
+        root.dataset.theme = theme;
+        themeToggle.textContent = theme === "dark" ? "Light" : "Dark";
+      }
+
+      applyTheme(activeTheme());
+      themeToggle.addEventListener("click", () => {
+        const next = root.dataset.theme === "dark" ? "light" : "dark";
+        localStorage.setItem("theme", next);
+        applyTheme(next);
+      });
+
+      async function render() {
+        const notes = await (await fetch("/api/notes")).json();
+        list.replaceChildren(
+          ...notes.map((note) => {
+            const item = document.createElement("li");
+            const label = document.createElement("span");
+            label.textContent = note.text;
+            const remove = document.createElement("button");
+            remove.textContent = "Delete";
+            remove.addEventListener("click", async () => {
+              await fetch(`/api/notes/${note.id}`, { method: "DELETE" });
+              render();
+            });
+            item.append(label, remove);
+            return item;
+          }),
+        );
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        await fetch("/api/notes", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ text: input.value }),
+        });
+        input.value = "";
+        render();
+      });
+
+      render();
+    </script>
+  </body>
+</html>
