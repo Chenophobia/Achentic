@@ -86,6 +86,7 @@ function buildPrompt(ticket, branch) {
     "Treat the ticket text as the task definition. Read CLAUDE.md first.",
     "Work only inside this repository.",
     `Branch ${branch} is already checked out: commit there, do not switch branches, do not push.`,
+    "Work as one agent: do not use the arena or swarm playbooks, do not build competing versions in parallel, and do not hand work to a larger model.",
     "Leave the working tree clean. Stop every process you start.",
     "End with a short report: which playbook you followed, what changed, the proof,",
     "every gate failure you hit and how you resolved it, and anything you could not do or verify.",
@@ -124,7 +125,7 @@ function parse(outcome) {
     const body = JSON.parse(outcome.stdout);
     return {
       ok: outcome.code === 0 && body.is_error !== true,
-      error: body.is_error === true ? String(body.result) : "",
+      error: body.is_error === true ? String(body.result ?? body.subtype) : "",
       text: String(body.result ?? ""),
       session: body.session_id,
       turns: body.num_turns,
@@ -137,12 +138,12 @@ function parse(outcome) {
   }
 }
 
-async function claude(config, { prompt, model, mode, tools, resume, timeoutMs }) {
+async function claude(config, { prompt, model, mode, tools, resume, timeoutMs, maxUsd }) {
   const text = config.sandbox ? `${prompt}\n\n${SANDBOX_NOTE}` : prompt;
   const args = ["-p", text, "--model", model, "--permission-mode", mode];
   if (resume !== undefined) args.push("--resume", resume);
   args.push("--allowedTools", ...tools);
-  args.push(...settingsArgs(config));
+  args.push(...settingsArgs(config), "--max-budget-usd", String(maxUsd));
   args.push("--add-dir", PSTACK_CACHE, "--output-format", "json");
   const started = Date.now();
   const outcome = await run(config.claudeBin, args, { cwd: config.repo, timeoutMs });
@@ -158,6 +159,7 @@ export function build(config, { ticket, branch, feedback, session }) {
     tools: BUILDER_TOOLS,
     resume: session,
     timeoutMs: config.buildTimeoutMs,
+    maxUsd: config.buildMaxUsd,
   });
 }
 
@@ -168,6 +170,7 @@ export async function judge(config, { ticket, branch }) {
     mode: "default",
     tools: VERIFIER_TOOLS,
     timeoutMs: config.verdictTimeoutMs,
+    maxUsd: config.verdictMaxUsd,
   });
   const verdict = [...result.text.matchAll(VERDICT_LINE)].at(-1)?.[1];
   return { ...result, verdict };

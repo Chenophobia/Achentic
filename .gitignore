@@ -2,3 +2,5 @@ node_modules/
 .verify-evidence/
 .DS_Store
 sandbox/
+
+sensors/glitchtip/.env

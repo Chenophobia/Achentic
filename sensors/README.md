@@ -6,7 +6,7 @@ Scripts that watch a deployed app and turn a real failure into a ticket for the 
 |---|---|---|
 | [Uptime check](uptime-kuma/README.md) (Uptime Kuma) | Is it up? Are the orchestrator and live check still running? | Alert only |
 | Scheduled live check (below) | Does it work for a user? | Ticket after two failures |
-| Error collection (GlitchTip) | Is it throwing errors? | Not built |
+| [Error collection](glitchtip/README.md) (GlitchTip) | Is it throwing errors? | Ticket per new error |
 
 ## Scheduled live check
 

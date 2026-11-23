@@ -2,6 +2,8 @@ import { readFile } from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { createServer } from "node:http";
 import { fileURLToPath } from "node:url";
+import type { ErrorReporter } from "./error-reporter.ts";
+import { createErrorReporter } from "./error-reporter.ts";
 import type { Store } from "./store.ts";
 import { createStore } from "./store.ts";
 
@@ -12,6 +14,14 @@ const MAX_NOTE_LENGTH = 280;
 function json(res: ServerResponse, status: number, body: unknown): void {
   res.writeHead(status, { "content-type": "application/json" });
   res.end(JSON.stringify(body));
+}
+
+function parseRequestUrl(rawUrl: string): URL | null {
+  try {
+    return new URL(rawUrl, "http://localhost");
+  } catch {
+    return null;
+  }
 }
 
 async function readBody(req: IncomingMessage): Promise<unknown> {
@@ -49,7 +59,11 @@ async function createNote(req: IncomingMessage, res: ServerResponse, store: Stor
 }
 
 async function route(req: IncomingMessage, res: ServerResponse, store: Store): Promise<void> {
-  const url = new URL(req.url ?? "/", "http://localhost");
+  const url = parseRequestUrl(req.url ?? "/");
+  if (url === null) {
+    json(res, 400, { error: "bad request" });
+    return;
+  }
 
   if (req.method === "GET" && url.pathname === "/") {
     await serveIndex(res);
@@ -75,12 +89,16 @@ async function route(req: IncomingMessage, res: ServerResponse, store: Store): P
   json(res, 404, { error: "not found" });
 }
 
-export function createApp(store: Store = createStore()) {
+export function createApp(
+  store: Store = createStore(),
+  report: ErrorReporter = createErrorReporter(process.env.ERROR_DSN),
+) {
   return createServer(async (req, res) => {
     try {
       await route(req, res, store);
-    } catch {
+    } catch (error) {
       if (!res.headersSent) json(res, 400, { error: "bad request" });
+      report(error, req.method ?? "", parseRequestUrl(req.url ?? "/")?.pathname ?? "/");
     }
   });
 }

@@ -44,7 +44,7 @@ It never pushes, merges or deploys.
 
 - A change to `scripts/gates.sh`, `scripts/no-comments.sh`, `biome.json`, `tsconfig.json`, `knip.json`, `CLAUDE.md`, `.github/` or `.claude/`.
 - A change to the `scripts` in `package.json`.
-- A builder or verifier run that errors or times out (expired login, quota).
+- A builder or verifier run that errors, times out or goes over its spending cap (expired login, quota, runaway run).
 - A verifier that changed the repository or gave no verdict line.
 - A branch for the ticket that already exists.
 
@@ -61,6 +61,8 @@ Environment variables, all optional.
 | `ACHENTIC_GATES` | `sh scripts/gates.sh` | Gate command |
 | `ACHENTIC_DAILY_CAP` | `3` | Tickets started per day |
 | `ACHENTIC_MAX_ATTEMPTS` | `3` | Builder attempts per ticket |
+| `ACHENTIC_BUILD_MAX_USD` | `6` | Spending cap for one builder run, API-equivalent. Going over blocks the ticket |
+| `ACHENTIC_VERDICT_MAX_USD` | `4` | Same for one verifier run |
 | `ACHENTIC_BUILDER_MODEL` | `sonnet` | |
 | `ACHENTIC_VERIFIER_MODEL` | `opus` | |
 | `ACHENTIC_BUILD_MINUTES` | `30` | Builder timeout |
@@ -96,7 +98,7 @@ Before starting it: `claude auth status` shows the personal Max account, and `no
 node --test orchestrator/test/orchestrator.test.mjs
 ```
 
-Nine tests drive the whole pipeline against a throwaway git repository with a fake agent: pass, gate failure and retry, three failed verdicts, protected file, edited scripts, dirty tree, meddling verifier, agent error, daily cap, held and stale lock, and two open tickets merged without conflict.
+Ten tests drive the whole pipeline against a throwaway git repository with a fake agent: pass, gate failure and retry, three failed verdicts, protected file, edited scripts, dirty tree, meddling verifier, agent error, daily cap, held and stale lock, and two open tickets merged without conflict.
 
 ## Not done
 

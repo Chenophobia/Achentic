@@ -1,0 +1,43 @@
+name: achentic-errors
+
+x-environment: &environment
+  DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
+  VALKEY_URL: ""
+  SECRET_KEY: ${GLITCHTIP_SECRET_KEY:?run sh sensors/glitchtip/init.sh first}
+  EMAIL_URL: consolemail://
+  GLITCHTIP_DOMAIN: ${GLITCHTIP_DOMAIN:-http://localhost:8000}
+  DEFAULT_FROM_EMAIL: glitchtip@localhost
+  ENABLE_ADMIN: "False"
+  ENABLE_OPENAPI: ${GLITCHTIP_OPENAPI:-False}
+  GLITCHTIP_ENABLE_MCP: "False"
+  GLITCHTIP_ENABLE_DUCKDB: "False"
+  GLITCHTIP_ENABLE_LOGS: "False"
+  GLITCHTIP_ENABLE_UPTIME: "False"
+  ENABLE_USER_REGISTRATION: ${GLITCHTIP_REGISTRATION:-True}
+
+services:
+  postgres:
+    image: postgres:18
+    command: -c max_locks_per_transaction=512
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+    restart: unless-stopped
+    volumes:
+      - pg-data:/var/lib/postgresql
+
+  web:
+    image: glitchtip/glitchtip:6.2
+    depends_on:
+      - postgres
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      <<: *environment
+      SERVER_ROLE: all_in_one
+    restart: unless-stopped
+    volumes:
+      - uploads:/code/uploads
+
+volumes:
+  pg-data:
+  uploads:

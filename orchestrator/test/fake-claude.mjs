@@ -18,7 +18,8 @@ if (step.commit) {
 }
 console.log(
   JSON.stringify({
-    result: step.result ?? "done",
+    result: step.result === undefined ? "done" : step.result,
+    subtype: step.subtype,
     is_error: step.error === true,
     session_id: "session-1",
     num_turns: 1,

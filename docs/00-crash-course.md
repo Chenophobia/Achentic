@@ -28,6 +28,7 @@ You write a ticket. A script hands it to an agent that builds it. Plain scripts 
 | Sandbox mode | `ACHENTIC_SANDBOX=1` | Confines every command the agents run | Proven |
 | Live check | `sensors/verify-live.mjs` | Hourly: is the live app working for a user? Files a ticket if not | Built, tested locally |
 | Uptime check | `sensors/uptime-kuma/` | Every minute: is it up? Are the jobs still running? Alerts only | Built, setup is yours |
+| Error collection | `sensors/glitchtip/`, `sensors/errors.mjs` | Hourly: any new error in the live app? Files a ticket per error | Built, tested against a fake |
 | CI | `.github/workflows/ci.yml` | Runs the gates on GitHub on every push | Running |
 | Agent user | `setup/agent-user/` | A separate macOS account that owns nothing valuable | Scripts written, not run |
 
@@ -119,7 +120,8 @@ Pocock's skills are never called by the orchestrator. You type them yourself whe
 - One ticket costs about **$3 to $4 API-equivalent**. On the subscription you are not billed that; it comes out of the weekly limit. How much of the weekly limit is not measured yet.
 - All test runs so far, about 24: roughly $31 API-equivalent.
 - The $20 API budget is used by nothing that is built. The run wrapper removes `ANTHROPIC_API_KEY` so a run cannot fall back to paid use.
-- Brakes: 3 tickets a day, 3 attempts a ticket, one ticket at a time, 2 sensor tickets a day.
+- Brakes: 3 tickets a day, 3 attempts a ticket, one ticket at a time, 2 sensor tickets a day, and a spending cap per agent run ($6 builder, $4 verifier).
+- One ticket went far over: $13.60 for the builder, because pstack built three competing versions on larger models. The cap and a one-agent instruction were added after it. Run `/pstack:setup-pstack` with a small budget in each app repo.
 
 ## 7. Run it by hand
 
@@ -194,7 +196,7 @@ One cost: Chrome cannot start inside the sandbox. The orchestrator runs the brow
 | After merge | GitHub Actions | Same gates, clean machine |
 | Live | Uptime check | Down or unreachable: alert |
 | Live | Live check | Up but broken: ticket, back into the loop |
-| Live | Error collection (GlitchTip) | Not built. For a real deployed app |
+| Live | Error collection (GlitchTip) | New error: ticket. Built, not yet run against a real GlitchTip project |
 
 ## 11. Proven and not
 

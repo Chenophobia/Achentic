@@ -41,6 +41,8 @@ function setup(plan) {
     builderModel: "sonnet",
     verifierModel: "opus",
     dailyCap: 3,
+    buildMaxUsd: 6,
+    verdictMaxUsd: 4,
     maxAttempts: 3,
     buildTimeoutMs: 20_000,
     verdictTimeoutMs: 20_000,
@@ -98,6 +100,17 @@ test("sandbox mode passes a settings file that confines commands and tells the a
   const plain = setup([GOOD, PASS]);
   await runOnce(plain.config, plain.state);
   assert.ok(plain.calls().every((call) => !call.includes("--settings")));
+});
+
+test("each agent run carries its own spending cap, and going over it blocks the ticket", async () => {
+  const { config, state, calls } = setup([GOOD, PASS]);
+  await runOnce(config, state);
+  const caps = calls().map((call) => call[call.indexOf("--max-budget-usd") + 1]);
+  assert.deepEqual(caps, ["6", "4"]);
+  assert.match(calls()[0][1], /do not use the arena or swarm playbooks/);
+  const over = setup([{ error: true, result: null, subtype: "error_max_budget_usd" }]);
+  assert.equal(await runOnce(over.config, over.state), "blocked");
+  assert.match(over.state.tickets["001-thing"].reason, /error_max_budget_usd/);
 });
 
 test("gate failure goes back to the same builder session with the output", async () => {

@@ -27,6 +27,8 @@ function configFor(repo) {
     ntfyUrl: env.ACHENTIC_NTFY_URL,
     sandbox: env.ACHENTIC_SANDBOX === "1",
     dailyCap: number("ACHENTIC_DAILY_CAP", 3),
+    buildMaxUsd: number("ACHENTIC_BUILD_MAX_USD", 6),
+    verdictMaxUsd: number("ACHENTIC_VERDICT_MAX_USD", 4),
     maxAttempts: number("ACHENTIC_MAX_ATTEMPTS", 3),
     buildTimeoutMs: number("ACHENTIC_BUILD_MINUTES", 30) * MINUTE,
     verdictTimeoutMs: number("ACHENTIC_VERDICT_MINUTES", 20) * MINUTE,

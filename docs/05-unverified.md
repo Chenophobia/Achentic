@@ -306,6 +306,22 @@ Running total: twenty-one ticket runs plus three probes ≈ $31 API-equivalent.
 
 Branch `agent/004-note-count` merged by hand the same day, no conflict (the first merge since tickets stopped moving). Gates green, drive 4 of 4, exported to `examples/tiny-notes-ts`.
 
+## Error collection — 2026-11-23, `sensors/glitchtip/`, `sensors/errors.mjs`
+
+| Step | Result |
+|---|---|
+| GlitchTip 6.2 from the compose file (web + Postgres, no Valkey), on a MacBook | Health endpoint up within a minute, 127.0.0.1 only, about 250 MB idle for both containers |
+| Its API description | Read from the running instance; the sensor's four requests match it |
+| Sensor tests against a fake tracker | 5 of 5: nothing to do; new error to one ticket; oldest first, cap, minimum events; resolve after verdict and re-file on return; tracker down, repository busy |
+| Ticket 005, error reporting in the example app, orchestrator in sandbox mode | `review`, `PASS`, first attempt. 79-line reporter with no dependency, 6 new tests against a local fake tracker, 16 tests in all. Also moved URL parsing so a malformed address is rejected on purpose instead of being reported as unexpected |
+| Cost of that ticket | Builder $13.60 and 28 minutes, verifier $1.58. pstack ran its arena: three competing versions on Sonnet, Opus and Fable, then a judge. `--model sonnet` does not bind pstack's subagents, and `/pstack:setup-pstack` had never been run in the sandbox repo |
+| A hung test | One of the builder's test runs hung for about 5 minutes in its scratch copy; the agent recovered by itself, 90 seconds before the orchestrator's 30-minute limit |
+| Fix for the cost | Orchestrator now passes `--max-budget-usd` to every agent run (default $6 builder, $4 verifier; tested on the subscription: the run ends with `error_max_budget_usd`) and tells the builder to work as one agent. Not yet seen on a real ticket |
+
+Not done: the sensor and the app's reporter against a real GlitchTip project. That needs an account, a project and a token inside GlitchTip. The app's event format follows the Sentry protocol as written in the ticket; whether GlitchTip accepts it is unconfirmed.
+
+Running total: about twenty-six runs ≈ $47 API-equivalent.
+
 Also untested: the GitHub-issues poller sketch and gate script in [03-setup-runbook.md](03-setup-runbook.md). The CLI flags in them (`--permission-mode auto`, `--permission-prompts none`, `--max-turns`, `--bare`, `--max-budget-usd`) come from the docs as reported by researchers; confirm against `claude --help` on your install.
 
 The reconciliation of pstack with Pocock's skills is this project's own judgment. Neither author mentions the other.
