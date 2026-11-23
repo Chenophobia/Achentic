@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.achentic.orchestrator.APP</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>NODE_BIN</string>
+    <string>ACHENTIC_DIR/orchestrator/orchestrator.mjs</string>
+    <string>run</string>
+    <string>--repo</string>
+    <string>APP_REPO</string>
+  </array>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>NODE_DIR:CLAUDE_DIR:/opt/homebrew/bin:/usr/bin:/bin</string>
+    <key>ACHENTIC_DAILY_CAP</key>
+    <string>3</string>
+  </dict>
+
+  <key>StartInterval</key>
+  <integer>1800</integer>
+  <key>RunAtLoad</key>
+  <false/>
+  <key>ProcessType</key>
+  <string>Background</string>
+
+  <key>StandardOutPath</key>
+  <string>HOME_DIR/Library/Logs/achentic-APP.log</string>
+  <key>StandardErrorPath</key>
+  <string>HOME_DIR/Library/Logs/achentic-APP.log</string>
+</dict>
+</plist>

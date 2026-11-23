@@ -59,7 +59,13 @@ Run as pre-push hook and as the required CI check. Add baselines so only new fin
 | 4. Scheduled, throttled | launchd poller, one issue at a time, low daily cap, non-author verdict, you merge every PR | 2 weeks: no gate weakened, no runaway quota, verdicts match your own checks |
 | 5. Maintenance + selective autonomy | Daily verification upkeep, architecture survey, retro→lint. Auto-merge only narrow classes (dep bumps, docs) | Ongoing; widen only on clean record |
 
-## Poller (untested sketch)
+## Orchestrator (built, run once by hand)
+
+The working version is in [orchestrator/](../orchestrator/README.md): tickets from `tickets/ready/`, builder, checks, gates, browser verify, non-author verdict, up to three attempts, launchd installer. Use that.
+
+## Poller for GitHub issues (untested sketch)
+
+The sketch below is the older idea, kept for the parts the orchestrator does not do yet: reading tickets from GitHub issues, pushing, opening a pull request, running under a sandbox.
 
 Runs as the dedicated agent user. The agent runs sandboxed; the wrapper, outside the sandbox, does git push and PR creation so the GitHub token never reaches the agent.
 

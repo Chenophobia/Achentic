@@ -82,3 +82,14 @@ jobs:
           path: examples/tiny-notes/.verify-evidence/
           include-hidden-files: true
           if-no-files-found: warn
+
+  orchestrator-tests:
+    name: Orchestrator pipeline tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --test orchestrator/test/orchestrator.test.mjs

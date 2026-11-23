@@ -31,8 +31,9 @@ Every rule has one enforcer. If a rule has none, it is a wish.
 | No copy-pasted blocks | jscpd | Gates, CI | Yes |
 | Tests pass | `node --test` | Gates, CI | Yes |
 | Feature works for a user | `verify-<app>` drive script | CI (example app); orchestrator | Yes, on the example app |
-| Change judged by a non-author | Orchestrator runs a fresh Opus process | Orchestrator (not built) | Done by hand twice |
-| Agent cannot weaken a gate | Branch protection + required check; agent token without workflow permission; PRs touching gate files go to a human | GitHub settings (yours to set) | Not yet |
+| Change judged by a non-author | Orchestrator runs a fresh Opus process | `orchestrator/` | Yes, with a fake agent; one real verdict |
+| Agent cannot weaken a gate, locally | Orchestrator blocks any change to gate files, `.github/`, `.claude/`, `CLAUDE.md` or `package.json` scripts | `orchestrator/` | Yes, with a fake agent |
+| Agent cannot weaken a gate, on GitHub | Branch protection + required check; agent token without workflow permission; PRs touching gate files go to a human | GitHub settings (yours to set) | Not yet |
 | pstack for code, Pocock for five named uses | Orchestrator prompts; `CLAUDE.md` | See [06-which-tool-when.md](06-which-tool-when.md) | Held in one build with both plugins enabled |
 
 ## CI

@@ -69,7 +69,7 @@ All on a 170-line throwaway app, [examples/tiny-notes](../examples/tiny-notes), 
 | Not tested or not built | |
 |---|---|
 | A real app (database, auth, dependencies) | Unknown how it scales |
-| Running unattended | Every run was started by hand |
+| Running unattended | The orchestrator ran one ticket end to end, started by hand. Not scheduled yet |
 | Quota per ticket | Never measured against the weekly limit |
 | Phone intake, preview, deploy, rollback | Not built |
 | Sandbox user, process cleanup | Not built; early runs left orphan servers |
@@ -78,7 +78,7 @@ All on a 170-line throwaway app, [examples/tiny-notes](../examples/tiny-notes), 
 
 "Runs 24/7" and "catches bugs whenever" are two different systems. Only part of the first exists.
 
-**A. Building around the clock (designed, not built)**
+**A. Building around the clock (script built in `orchestrator/`, not scheduled)**
 
 1. A poller on the Mac mini, started by launchd every 15–30 minutes, that picks one ready ticket and runs the build.
 2. A wrapper that caps runs per day, logs cost, and kills leftover processes.

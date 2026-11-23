@@ -4,7 +4,7 @@ A personal agentic development cycle: describe an idea, agents build it, scripts
 
 **pstack is the engine.** Matt Pocock's skills are used at five named points and nowhere else. Deterministic gates run on GitHub Actions. AI work runs on a Mac mini on a Claude Max subscription.
 
-**Status, 2026-11-23:** the core loop has been run by hand, headless, on a small example app and it works. A TypeScript-strict template with six tested gates exists, and an agent has rebuilt the example on it with every gate green. Nothing runs unattended yet, and no real app has been through it.
+**Status, 2026-11-23:** the core loop has been run by hand, headless, on a small example app and it works. A TypeScript-strict template with six tested gates exists, and an agent has rebuilt the example on it with every gate green. An orchestrator script now runs the loop for one ticket end to end; it has done so once, started by hand. It is not scheduled yet, and no real app has been through it.
 
 ## Start here
 
@@ -25,6 +25,7 @@ A personal agentic development cycle: describe an idea, agents build it, scripts
 | [docs/05-unverified.md](docs/05-unverified.md) | Open questions and the log of every test run |
 | [docs/06-which-tool-when.md](docs/06-which-tool-when.md) | pstack vs Pocock, decided |
 | [docs/07-code-standards.md](docs/07-code-standards.md) | Standards, enforcers, CI |
+| [orchestrator/](orchestrator) | The script that runs the loop: one ticket per run, retries, verdict, launchd installer, tests |
 | [template/](template) | Starting point for a new app: TypeScript strict, six gates, CI workflow, agent rules |
 | [examples/tiny-notes-ts/](examples/tiny-notes-ts) | The same app rebuilt in strict TypeScript on the template by one pstack run, with its verdict |
 | [examples/tiny-notes/](examples/tiny-notes) | The app the loop was tested on, with its tickets, verify skill, generated spec and the two non-author verdicts |
@@ -54,11 +55,13 @@ TypeScript strict · no `any` · no comments · no unused code · no duplication
 - A non-author verdict that found two crashes the author missed, then a fix and a clean re-verdict.
 - Template gates: six out of six fail on the bad change they exist to catch.
 - An agent building under those gates: strict types, no `any`, no comments, and a complexity gate that forced a real restructure instead of a config edit.
+- The orchestrator: seven pipeline tests with a fake agent, and one real ticket taken from queue to PASS verdict with no hand steps (5 min 20 s builder, 2 min verifier, ≈ $3.80 equivalent).
 
 ## Not yet
 
 - A real app with a database, auth and dependencies.
-- Anything unattended: orchestrator, schedule, preview, deploy.
+- Anything unattended: the orchestrator on a schedule, preview, deploy.
+- The orchestrator's retry path on a real agent (first real ticket passed first time).
 - Quota cost per ticket against the weekly limit.
 - A sandboxed agent user and automatic process cleanup.
 - Sensors that catch bugs in production.

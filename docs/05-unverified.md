@@ -177,7 +177,7 @@ This is the strongest result of the day: the non-author gate independently found
 | Non-author verdict gate | Proven once, and it earned its place |
 | Open bugs in sandbox | `null` body crash, `GET //` crash, theme flash on load — good material for the next tickets |
 | Still not exercised | `/interrogate`, `/no-comments`, `/correct`, subagent delegation, the 5 tags tickets |
-| Still not built | Poller, sandbox user, CI runner, preview, deploy, process reaping |
+| Still not built (as of 2026-11-21; the poller now exists, see the orchestrator entry) | Poller, sandbox user, CI runner, preview, deploy, process reaping |
 | Today's total | Nine headless runs ≈ $13 API-equivalent; share of weekly Max limit still unmeasured |
 
 ## Full loop: verdict finding → ticket → fix → re-verdict — 2026-11-21
@@ -222,6 +222,25 @@ New gap: nothing limits `as` assertions.
 
 Running total: fourteen headless runs ≈ $21 API-equivalent. Share of the weekly Max limit still unmeasured.
 
-Also untested: the poller script and gate script in [03-setup-runbook.md](03-setup-runbook.md). The CLI flags in them (`--permission-mode auto`, `--permission-prompts none`, `--max-turns`, `--bare`, `--max-budget-usd`) come from the docs as reported by researchers; confirm against `claude --help` on your install.
+## Orchestrator — 2026-11-23, `orchestrator/`
+
+A Node script, no dependencies. One ticket per run: builder → branch checks → gates → browser verify → non-author verdict, up to three attempts, then `review` or `blocked`.
+
+| Step | Result |
+|---|---|
+| Pipeline tests, fake agent, throwaway git repo | 7 of 7. Pass; gate failure resumed in the same session with the output; three FAIL verdicts then blocked; gate file touched; `package.json` scripts edited; dirty tree; verifier that edits; agent error; missing verdict line; daily cap; held and stale lock |
+| Real ticket 002 (280-character limit with live counter), `sandbox/tiny-notes-ts`, one command, no hand steps | `review`, verdict `PASS`, first attempt. 7 min 20 s wall |
+| Builder (Sonnet) | 5 min 18 s wall, API-equivalent $2.49. One commit: server check, page counter, 2 tests, a new `length-limit` flow in the verify drive |
+| Verifier (Opus), no edit permission | 1 min 54 s, API-equivalent $1.31. Ran gates and drive, then five requests the author had not made (trailing spaces, emoji at the boundary, whitespace only). All correct |
+| After the run | Repo back on `main`, clean. Ticket moved to `tickets/done/` and verdict saved on the branch. No process left |
+| My check | Gates and the 4-flow drive rerun by hand on the branch: green |
+
+Settles: the loop runs from a queued ticket to a mergeable branch without a human in between. Does not settle: the retry path with a real agent (only the fake one has failed so far), scheduled running, a second ticket in a row, quota share.
+
+The builder's own `num_turns` and `duration_ms` (8 turns, 46 s) did not match the wall time; `runs.jsonl` now records wall time as well.
+
+Running total: sixteen headless runs ≈ $25 API-equivalent.
+
+Also untested: the GitHub-issues poller sketch and gate script in [03-setup-runbook.md](03-setup-runbook.md). The CLI flags in them (`--permission-mode auto`, `--permission-prompts none`, `--max-turns`, `--bare`, `--max-budget-usd`) come from the docs as reported by researchers; confirm against `claude --help` on your install.
 
 The reconciliation of pstack with Pocock's skills is this project's own judgment. Neither author mentions the other.
