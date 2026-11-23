@@ -263,6 +263,8 @@ Fixed the same day: the orchestrator no longer moves ticket files. It commits on
 
 First CI flake, 2026-11-23: on the push of that fix, the browser drive of `examples/tiny-notes` failed on GitHub although none of its files had changed and it had passed four runs before and six local reruns after. The job log was not readable without a GitHub login, so the cause is unconfirmed. One real race was found and removed: the drivers sent `Page.navigate` and only then started listening for the load event. Both examples now register the listener first.
 
+Second CI flake, same day, other example: the browser drive of `examples/tiny-notes-ts` failed on a commit that did not touch it, after passing on the commit before and on eight local reruns. So the race fix above was not the whole cause, or not the cause. Still no log access. Two changes: the harness retries Chrome's start once and reports a spawn error instead of crashing, and the CI step now prints the failing flow's message as an annotation, which is readable without a login. The next flake will say why.
+
 ## Scheduled live check sensor — 2026-11-23, `sensors/`
 
 The verify driver of the TypeScript example gained a `live` mode: it targets `VERIFY_BASE_URL`, starts no server, and runs only the two flows that leave nothing behind. The sensor runs that, and files a ticket after two failures in a row.

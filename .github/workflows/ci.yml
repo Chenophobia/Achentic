@@ -48,7 +48,12 @@ jobs:
       - name: Gates
         run: npm run gates
       - name: Drive the running app in headless Chrome
-        run: node tools/verify/drive.mjs all
+        run: |
+          node tools/verify/drive.mjs all 2>&1 | tee drive.log || {
+            grep -h "FAILED" drive.log | cut -c1-900 | sed 's/^/::error::/'
+            exit 1
+          }
+        shell: bash -o pipefail {0}
       - name: Upload evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -73,7 +78,12 @@ jobs:
       - name: Gates
         run: sh scripts/gates.sh
       - name: Drive the running app in headless Chrome
-        run: node tools/verify/drive.mjs all
+        run: |
+          node tools/verify/drive.mjs all 2>&1 | tee drive.log || {
+            grep -h "FAILED" drive.log | cut -c1-900 | sed 's/^/::error::/'
+            exit 1
+          }
+        shell: bash -o pipefail {0}
       - name: Upload evidence
         if: always()
         uses: actions/upload-artifact@v4

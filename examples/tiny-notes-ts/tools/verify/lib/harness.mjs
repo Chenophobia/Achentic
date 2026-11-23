@@ -59,7 +59,18 @@ export function stopServer(handle) {
   handle.proc.kill();
 }
 
+// Chrome's cold start on a busy machine sometimes misses the devtools
+// deadline. That is the machine, not the app, so try once more before failing.
 export async function startChrome(cdpPort) {
+  try {
+    return await launchChrome(cdpPort);
+  } catch (err) {
+    console.error(`chrome did not start, retrying once: ${err.message}`);
+    return launchChrome(cdpPort);
+  }
+}
+
+async function launchChrome(cdpPort) {
   const userDataDir = await mkdtemp(join(tmpdir(), "tiny-notes-verify-"));
   const proc = spawn(
     CHROME_BIN,
@@ -78,12 +89,16 @@ export async function startChrome(cdpPort) {
     ],
     { stdio: "ignore" },
   );
+  let spawnError = "";
+  proc.on("error", (err) => {
+    spawnError = ` (${err.message})`;
+  });
   try {
     await waitForHttp(`http://127.0.0.1:${cdpPort}/json/version`, 15000);
   } catch (err) {
     proc.kill();
     await rm(userDataDir, { recursive: true, force: true });
-    throw new Error(`chrome devtools on port ${cdpPort} never answered: ${err.message}`);
+    throw new Error(`chrome devtools on port ${cdpPort} never answered: ${err.message}${spawnError}`);
   }
   return { proc, userDataDir };
 }
