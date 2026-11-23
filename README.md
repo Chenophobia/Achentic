@@ -26,6 +26,7 @@ A personal agentic development cycle: describe an idea, agents build it, scripts
 | [docs/06-which-tool-when.md](docs/06-which-tool-when.md) | pstack vs Pocock, decided |
 | [docs/07-code-standards.md](docs/07-code-standards.md) | Standards, enforcers, CI |
 | [orchestrator/](orchestrator) | The script that runs the loop: one ticket per run, retries, verdict, launchd installer, tests |
+| [sensors/](sensors) | Scripts that watch a deployed app and file tickets. First one: the scheduled live check |
 | [template/](template) | Starting point for a new app: TypeScript strict, six gates, CI workflow, agent rules |
 | [examples/tiny-notes-ts/](examples/tiny-notes-ts) | The same app rebuilt in strict TypeScript on the template by one pstack run, with its verdict |
 | [examples/tiny-notes/](examples/tiny-notes) | The app the loop was tested on, with its tickets, verify skill, generated spec and the two non-author verdicts |
@@ -56,6 +57,7 @@ TypeScript strict · no `any` · no comments · no unused code · no duplication
 - Template gates: six out of six fail on the bad change they exist to catch.
 - An agent building under those gates: strict types, no `any`, no comments, and a complexity gate that forced a real restructure instead of a config edit.
 - The orchestrator: eight pipeline tests with a fake agent, and one real ticket taken from queue to PASS verdict with no hand steps (5 min 20 s builder, 2 min verifier, ≈ $3.80 equivalent), and a second real ticket where a forced gate failure went back to the same builder session and passed on attempt two.
+- The scheduled live check: seven tests, and by hand against a healthy, a broken and a stopped copy of the app (ok; suspect then ticket then duplicate ignored; outage alert without ticket).
 
 ## Not yet
 
@@ -64,7 +66,7 @@ TypeScript strict · no `any` · no comments · no unused code · no duplication
 - A real verifier FAIL sent back through the orchestrator (a forced gate failure has been; see the test log).
 - Quota cost per ticket against the weekly limit.
 - A sandboxed agent user and automatic process cleanup.
-- Sensors that catch bugs in production.
+- Sensors on a real deployed app. The scheduled live check exists and was tested against local copies only. Uptime check and error collection (GlitchTip) are not set up.
 - Branch protection on app repos (a GitHub setting, not code).
 
 ## Things learned the hard way

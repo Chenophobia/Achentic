@@ -85,7 +85,7 @@ All on a 170-line throwaway app, [examples/tiny-notes](../examples/tiny-notes), 
 3. A CI runner that runs gates, the verify skill and the verdict on every branch.
 4. You merge from your phone.
 
-**B. Catching bugs in what is already live (not designed yet)**
+**B. Catching bugs in what is already live (first sensor built in `sensors/`, not scheduled)**
 
 Today's loop only catches bugs in a change before it merges. Catching failures in production needs sensors that turn a failure into a ticket:
 

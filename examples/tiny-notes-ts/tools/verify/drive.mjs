@@ -3,7 +3,8 @@
 // browser (or, for "resilience", straight HTTP) and writes evidence under
 // .verify-evidence/. Run from the repo root:
 //
-//   node tools/verify/drive.mjs <add-delete|dark-mode|resilience|all>
+//   node tools/verify/drive.mjs <add-delete|dark-mode|length-limit|resilience|all>
+//   VERIFY_BASE_URL=https://notes.example.com node tools/verify/drive.mjs live
 //
 // Each run starts its own server (on a free port, never 3000) and its own
 // headless Chrome instance (for the browser features), and tears down only
@@ -24,10 +25,22 @@ import {
 } from "./lib/harness.mjs";
 
 const FEATURES = ["add-delete", "dark-mode", "length-limit", "resilience"];
+// Flows that are safe against a deployed app: they leave no data behind and
+// send no malformed requests. Only these may run when VERIFY_BASE_URL is set.
+const LIVE_FEATURES = ["add-delete", "dark-mode"];
+const LIVE_URL = process.env.VERIFY_BASE_URL?.replace(/\/+$/, "");
 const feature = process.argv[2];
 
-if (!feature || (feature !== "all" && !FEATURES.includes(feature))) {
-  console.error(`usage: node tools/verify/drive.mjs <${FEATURES.join("|")}|all>`);
+if (!feature || (!["all", "live"].includes(feature) && !FEATURES.includes(feature))) {
+  console.error(`usage: node tools/verify/drive.mjs <${FEATURES.join("|")}|all|live>`);
+  process.exit(1);
+}
+if (feature === "live" && !LIVE_URL) {
+  console.error("live needs VERIFY_BASE_URL, the address of the deployed app");
+  process.exit(1);
+}
+if (LIVE_URL && feature !== "live" && !LIVE_FEATURES.includes(feature)) {
+  console.error(`refusing to run "${feature}" against ${LIVE_URL}: only ${LIVE_FEATURES.join(", ")} are safe on a deployed app`);
   process.exit(1);
 }
 
@@ -50,7 +63,20 @@ function makeLogger(name) {
   };
 }
 
-async function runAddDelete({ cdp, log, appPort }) {
+// Against a deployed app (VERIFY_BASE_URL) nothing is started; otherwise this
+// starts a private server on a free port.
+async function startApp(log) {
+  if (LIVE_URL) {
+    await log(`target: deployed app at ${LIVE_URL}`);
+    return { baseUrl: LIVE_URL, server: undefined };
+  }
+  const appPort = await findFreePort();
+  const server = await startServer(appPort, repoRoot);
+  await log(`server ready at http://localhost:${appPort}`);
+  return { baseUrl: `http://localhost:${appPort}`, server };
+}
+
+async function runAddDelete({ cdp, log, baseUrl }) {
   const noteText = `verify-${Date.now()}`;
   await cdp.screenshot(join(evidenceDir, "add-delete-01-loaded.png"));
 
@@ -74,7 +100,7 @@ async function runAddDelete({ cdp, log, appPort }) {
   await log("note appeared in the DOM after render()");
   await cdp.screenshot(join(evidenceDir, "add-delete-02-added.png"));
 
-  const listed = await (await fetch(`http://localhost:${appPort}/api/notes`)).json();
+  const listed = await (await fetch(`${baseUrl}/api/notes`)).json();
   const created = listed.find((n) => n.text === noteText);
   if (!created) throw new Error("note not present via GET /api/notes after add");
   await log(`verified via API: note id ${created.id} stored with text "${created.text}"`);
@@ -98,12 +124,12 @@ async function runAddDelete({ cdp, log, appPort }) {
   );
   await cdp.screenshot(join(evidenceDir, "add-delete-03-deleted.png"));
 
-  const after = await (await fetch(`http://localhost:${appPort}/api/notes`)).json();
+  const after = await (await fetch(`${baseUrl}/api/notes`)).json();
   if (after.some((n) => n.id === created.id)) throw new Error("note still present via GET /api/notes after delete");
   await log(`verified via API: note id ${created.id} no longer stored`);
 }
 
-async function runDarkMode({ cdp, log, appPort }) {
+async function runDarkMode({ cdp, log, baseUrl }) {
   const initial = await cdp.evalExpr(`document.documentElement.dataset.theme`);
   await log(`initial theme: ${initial}`);
   await cdp.screenshot(join(evidenceDir, "dark-mode-01-initial.png"));
@@ -120,7 +146,7 @@ async function runDarkMode({ cdp, log, appPort }) {
   if (stored !== toggled) throw new Error(`localStorage theme "${stored}" does not match applied theme "${toggled}"`);
   await log(`verified localStorage persisted "${stored}"`);
 
-  await cdp.navigate(`http://localhost:${appPort}/`);
+  await cdp.navigate(`${baseUrl}/`);
   const afterReload = await cdp.evalExpr(`document.documentElement.dataset.theme`);
   if (afterReload !== toggled) {
     throw new Error(`theme reverted on reload: expected "${toggled}", got "${afterReload}"`);
@@ -136,7 +162,7 @@ async function runDarkMode({ cdp, log, appPort }) {
   await log(`toggled back to original theme: ${reverted}`);
 }
 
-async function runLengthLimit({ cdp, log, appPort }) {
+async function runLengthLimit({ cdp, log, baseUrl }) {
   await cdp.screenshot(join(evidenceDir, "length-limit-01-loaded.png"));
 
   const typed = await cdp.evalExpr(`
@@ -157,7 +183,7 @@ async function runLengthLimit({ cdp, log, appPort }) {
   }
   await cdp.screenshot(join(evidenceDir, "length-limit-02-clamped.png"));
 
-  const over = await fetch(`http://localhost:${appPort}/api/notes`, {
+  const over = await fetch(`${baseUrl}/api/notes`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ text: "b".repeat(281) }),
@@ -170,14 +196,14 @@ async function runLengthLimit({ cdp, log, appPort }) {
   }
   await log(`rejection body: ${JSON.stringify(overBody)}`);
 
-  const afterOver = await (await fetch(`http://localhost:${appPort}/api/notes`)).json();
+  const afterOver = await (await fetch(`${baseUrl}/api/notes`)).json();
   if (afterOver.some((n) => n.text.length > 280)) {
     throw new Error("a note longer than 280 chars was stored");
   }
   await log("verified via API: the 281-char note was not stored");
 
   const exact = "c".repeat(280);
-  const ok = await fetch(`http://localhost:${appPort}/api/notes`, {
+  const ok = await fetch(`${baseUrl}/api/notes`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ text: exact }),
@@ -185,7 +211,7 @@ async function runLengthLimit({ cdp, log, appPort }) {
   await log(`POST /api/notes with 280 chars -> ${ok.status}`);
   if (ok.status !== 201) throw new Error(`expected 201 for a 280-char note, got ${ok.status}`);
 
-  const afterExact = await (await fetch(`http://localhost:${appPort}/api/notes`)).json();
+  const afterExact = await (await fetch(`${baseUrl}/api/notes`)).json();
   if (!afterExact.some((n) => n.text === exact)) {
     throw new Error("the 280-char note was not stored");
   }
@@ -197,14 +223,11 @@ async function runBrowserFeature(name) {
   await reset();
   await log(`starting feature "${name}"`);
 
-  const appPort = await findFreePort();
   const cdpPort = await findFreePort();
-  await log(`app port ${appPort}, chrome devtools port ${cdpPort}`);
 
-  let server, chrome, tab, cdp;
+  let server, baseUrl, chrome, tab, cdp;
   try {
-    server = await startServer(appPort, repoRoot);
-    await log(`server ready at http://localhost:${appPort}`);
+    ({ server, baseUrl } = await startApp(log));
 
     chrome = await startChrome(cdpPort);
     await log(`headless chrome ready, devtools port ${cdpPort}`);
@@ -217,12 +240,12 @@ async function runBrowserFeature(name) {
     await cdp.connect();
     await cdp.send("Page.enable");
     await cdp.send("Runtime.enable");
-    await cdp.navigate(`http://localhost:${appPort}/`);
+    await cdp.navigate(`${baseUrl}/`);
     await log("page loaded");
 
-    if (name === "add-delete") await runAddDelete({ cdp, log, appPort });
-    if (name === "dark-mode") await runDarkMode({ cdp, log, appPort });
-    if (name === "length-limit") await runLengthLimit({ cdp, log, appPort });
+    if (name === "add-delete") await runAddDelete({ cdp, log, baseUrl });
+    if (name === "dark-mode") await runDarkMode({ cdp, log, baseUrl });
+    if (name === "length-limit") await runLengthLimit({ cdp, log, baseUrl });
 
     await log(`feature "${name}" PASSED`);
   } finally {
@@ -230,7 +253,7 @@ async function runBrowserFeature(name) {
     cdp?.close();
     await stopChrome(chrome);
     stopServer(server);
-    await log(`torn down server (port ${appPort}) and chrome (port ${cdpPort}) for "${name}"`);
+    await log(`stopped everything this run started for "${name}"`);
   }
 }
 
@@ -240,13 +263,11 @@ async function runResilience() {
   await reset();
   await log(`starting feature "${name}"`);
 
-  const appPort = await findFreePort();
-  let server;
+  let server, baseUrl;
   try {
-    server = await startServer(appPort, repoRoot);
-    await log(`server ready at http://localhost:${appPort}`);
+    ({ server, baseUrl } = await startApp(log));
 
-    const bad = await fetch(`http://localhost:${appPort}/api/notes`, {
+    const bad = await fetch(`${baseUrl}/api/notes`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: "{nope",
@@ -254,11 +275,11 @@ async function runResilience() {
     await log(`malformed POST /api/notes -> ${bad.status}`);
     if (bad.status !== 400) throw new Error(`expected 400 for malformed JSON, got ${bad.status}`);
 
-    const after = await fetch(`http://localhost:${appPort}/api/notes`);
+    const after = await fetch(`${baseUrl}/api/notes`);
     await log(`follow-up GET /api/notes -> ${after.status}`);
     if (after.status !== 200) throw new Error(`server stopped serving after malformed POST, got ${after.status}`);
 
-    const valid = await fetch(`http://localhost:${appPort}/api/notes`, {
+    const valid = await fetch(`${baseUrl}/api/notes`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ text: "still works after a bad request" }),
@@ -266,17 +287,17 @@ async function runResilience() {
     await log(`valid POST /api/notes after the malformed one -> ${valid.status}`);
     if (valid.status !== 201) throw new Error(`server rejected a valid POST after the malformed one, got ${valid.status}`);
 
-    const doubleSlash = await fetch(`http://localhost:${appPort}//`);
+    const doubleSlash = await fetch(`${baseUrl}//`);
     await log(`GET // -> ${doubleSlash.status}`);
     if (doubleSlash.status < 400 || doubleSlash.status >= 500) {
       throw new Error(`expected a 4xx for GET //, got ${doubleSlash.status}`);
     }
 
-    const afterDoubleSlash = await fetch(`http://localhost:${appPort}/api/notes`);
+    const afterDoubleSlash = await fetch(`${baseUrl}/api/notes`);
     await log(`follow-up GET /api/notes -> ${afterDoubleSlash.status}`);
     if (afterDoubleSlash.status !== 200) throw new Error(`server stopped serving after GET //, got ${afterDoubleSlash.status}`);
 
-    const nullBody = await fetch(`http://localhost:${appPort}/api/notes`, {
+    const nullBody = await fetch(`${baseUrl}/api/notes`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: "null",
@@ -284,28 +305,29 @@ async function runResilience() {
     await log(`POST /api/notes with JSON null body -> ${nullBody.status}`);
     if (nullBody.status !== 400) throw new Error(`expected 400 for a JSON null body, got ${nullBody.status}`);
 
-    const afterNullBody = await fetch(`http://localhost:${appPort}/api/notes`);
+    const afterNullBody = await fetch(`${baseUrl}/api/notes`);
     await log(`follow-up GET /api/notes -> ${afterNullBody.status}`);
     if (afterNullBody.status !== 200) throw new Error(`server stopped serving after a JSON null body, got ${afterNullBody.status}`);
 
-    const health = await fetch(`http://localhost:${appPort}/api/health`);
+    const health = await fetch(`${baseUrl}/api/health`);
     const healthBody = await health.json();
     await log(`GET /api/health -> ${health.status} ${JSON.stringify(healthBody)}`);
     if (health.status !== 200) throw new Error(`expected 200 for GET /api/health, got ${health.status}`);
     if (healthBody.status !== "ok") throw new Error(`expected {"status":"ok"} from /api/health, got ${JSON.stringify(healthBody)}`);
 
-    const healthWrongMethod = await fetch(`http://localhost:${appPort}/api/health`, { method: "POST" });
+    const healthWrongMethod = await fetch(`${baseUrl}/api/health`, { method: "POST" });
     await log(`POST /api/health -> ${healthWrongMethod.status}`);
     if (healthWrongMethod.status !== 404) throw new Error(`expected 404 for POST /api/health, got ${healthWrongMethod.status}`);
 
     await log(`feature "${name}" PASSED`);
   } finally {
     stopServer(server);
-    await log(`torn down server (port ${appPort}) for "${name}"`);
+    await log(`stopped everything this run started for "${name}"`);
   }
 }
 
-const toRun = feature === "all" ? FEATURES : [feature];
+const groups = { all: FEATURES, live: LIVE_FEATURES };
+const toRun = groups[feature] ?? [feature];
 let failed = false;
 for (const name of toRun) {
   try {

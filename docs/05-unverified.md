@@ -263,6 +263,20 @@ Fixed the same day: the orchestrator no longer moves ticket files. It commits on
 
 First CI flake, 2026-11-23: on the push of that fix, the browser drive of `examples/tiny-notes` failed on GitHub although none of its files had changed and it had passed four runs before and six local reruns after. The job log was not readable without a GitHub login, so the cause is unconfirmed. One real race was found and removed: the drivers sent `Page.navigate` and only then started listening for the load event. Both examples now register the listener first.
 
+## Scheduled live check sensor — 2026-11-23, `sensors/`
+
+The verify driver of the TypeScript example gained a `live` mode: it targets `VERIFY_BASE_URL`, starts no server, and runs only the two flows that leave nothing behind. The sensor runs that, and files a ticket after two failures in a row.
+
+| Step | Result |
+|---|---|
+| Sensor tests, fake check, throwaway git repo | 7 of 7 |
+| Live mode against a running copy of the app | Both flows pass; notes list empty afterwards; `all` refused against a live address |
+| Sensor against a healthy copy | `ok`, nothing filed |
+| Sensor against a copy whose delete was broken on purpose | Run 1 `suspect`; run 2 filed and committed `004-live-add-delete` with the failing output; run 3 `known`, nothing filed |
+| Sensor against a stopped app | `down`, one alert, no ticket |
+
+Not done: the filed ticket was not given to the orchestrator (the bug existed only in the broken copy, not in the repository). Not run on a schedule. Not run against an app behind Cloudflare. ntfy delivery not tested; no topic is configured.
+
 Also untested: the GitHub-issues poller sketch and gate script in [03-setup-runbook.md](03-setup-runbook.md). The CLI flags in them (`--permission-mode auto`, `--permission-prompts none`, `--max-turns`, `--bare`, `--max-budget-usd`) come from the docs as reported by researchers; confirm against `claude --help` on your install.
 
 The reconciliation of pstack with Pocock's skills is this project's own judgment. Neither author mentions the other.
