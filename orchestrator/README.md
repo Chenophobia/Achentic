@@ -67,6 +67,7 @@ Environment variables, all optional.
 | `ACHENTIC_VERDICT_MINUTES` | `20` | Verifier timeout |
 | `ACHENTIC_GATES_MINUTES` | `10` | Gates and verify timeout |
 | `ACHENTIC_NTFY_URL` | unset | An ntfy topic URL. Unset means log only |
+| `ACHENTIC_HEARTBEAT_URL` | unset | Pinged with the result after every run. See [sensors/uptime-kuma](../sensors/uptime-kuma/README.md) |
 | `ACHENTIC_CLAUDE_BIN` | `claude` | Used by the tests to substitute a fake |
 
 ## State

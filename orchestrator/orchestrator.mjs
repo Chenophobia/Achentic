@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { homedir } from "node:os";
 import { basename, join, resolve } from "node:path";
+import { beat } from "./lib/heartbeat.mjs";
 import { queue, runOnce } from "./lib/pipeline.mjs";
 import { git } from "./lib/proc.mjs";
 import { openState } from "./lib/state.mjs";
@@ -60,7 +61,12 @@ async function main() {
   if (action === undefined || flag === -1 || rest[flag + 1] === undefined) throw new Error(USAGE);
   const config = configFor(resolve(rest[flag + 1]));
   const state = openState(config.home);
-  if (action === "run") return state.log(`run: ${await runOnce(config, state)}`);
+  if (action === "run") {
+    const result = await runOnce(config, state);
+    state.log(`run: ${result}`);
+    await beat(process.env.ACHENTIC_HEARTBEAT_URL, result);
+    return;
+  }
   if (action === "status") return status(config, state);
   if (action === "retry" && rest[0] !== "--repo") return retry(config, state, rest[0]);
   throw new Error(USAGE);

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { homedir } from "node:os";
 import { basename, join, resolve } from "node:path";
+import { beat } from "../orchestrator/lib/heartbeat.mjs";
 import { openState } from "../orchestrator/lib/state.mjs";
 import { check } from "./lib/verify-live.mjs";
 
@@ -33,7 +34,9 @@ async function main() {
   };
   const home = join(env.ACHENTIC_HOME ?? join(homedir(), ".achentic"), basename(config.repo));
   const state = openState(home);
-  state.log(`sensor: ${await check(config, state)}`);
+  const result = await check(config, state);
+  state.log(`sensor: ${result}`);
+  await beat(env.ACHENTIC_SENSOR_HEARTBEAT_URL, result);
 }
 
 main().catch((error) => {

@@ -2,6 +2,12 @@
 
 Scripts that watch a deployed app and turn a real failure into a ticket for the [orchestrator](../orchestrator/README.md). No AI runs here; quota is spent only once a ticket exists.
 
+| Sensor | Question | On failure |
+|---|---|---|
+| [Uptime check](uptime-kuma/README.md) (Uptime Kuma) | Is it up? Are the orchestrator and live check still running? | Alert only |
+| Scheduled live check (below) | Does it work for a user? | Ticket after two failures |
+| Error collection (GlitchTip) | Is it throwing errors? | Not built |
+
 ## Scheduled live check
 
 Every hour, clicks through the deployed app like a user. If it is broken twice in a row, files one ticket.
@@ -39,7 +45,7 @@ What one run does:
 | Time allowed for the check | 5 minutes | `ACHENTIC_SENSOR_MINUTES` |
 | Check command | `node tools/verify/drive.mjs live` | `ACHENTIC_LIVE_CHECK` |
 
-`ACHENTIC_HOME`, `ACHENTIC_BASE` and `ACHENTIC_NTFY_URL` mean the same as for the orchestrator.
+`ACHENTIC_HOME`, `ACHENTIC_BASE` and `ACHENTIC_NTFY_URL` mean the same as for the orchestrator. `ACHENTIC_SENSOR_HEARTBEAT_URL`, if set, is pinged with the result after every run.
 
 Two failures count as the same when the flow and the message match after numbers are removed.
 

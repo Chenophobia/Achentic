@@ -66,7 +66,7 @@ TypeScript strict · no `any` · no comments · no unused code · no duplication
 - A real verifier FAIL sent back through the orchestrator (a forced gate failure has been; see the test log).
 - Quota cost per ticket against the weekly limit.
 - A sandboxed agent user and automatic process cleanup.
-- Sensors on a real deployed app. The scheduled live check exists and was tested against local copies only. Uptime check and error collection (GlitchTip) are not set up.
+- Sensors on a real deployed app. The scheduled live check exists and was tested against local copies only. The uptime check (Uptime Kuma) has a compose file that starts, but its monitors are yours to configure. Error collection (GlitchTip) is not set up.
 - Branch protection on app repos (a GitHub setting, not code).
 
 ## Things learned the hard way

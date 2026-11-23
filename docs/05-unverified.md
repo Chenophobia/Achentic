@@ -277,6 +277,18 @@ The verify driver of the TypeScript example gained a `live` mode: it targets `VE
 
 Not done: the filed ticket was not given to the orchestrator (the bug existed only in the broken copy, not in the repository). Not run on a schedule. Not run against an app behind Cloudflare. ntfy delivery not tested; no topic is configured.
 
+## Uptime check — 2026-11-23, `sensors/uptime-kuma/`
+
+Compose file for Uptime Kuma 2.5.12, bound to localhost, plus heartbeat pings from the orchestrator and the live check so that a job which stops running is noticed.
+
+| Step | Result |
+|---|---|
+| Container from the compose file, on a MacBook (not the Mac mini) | Healthy in under 10 s, setup page on 127.0.0.1:3001, about 140 MB idle, reaches host services |
+| Heartbeat test | Sends the result to the push address; a dead address does not fail the run |
+| Cleanup | Container, volume and image removed from the MacBook |
+
+Not done: admin account, monitors, ntfy notification and push monitors inside Uptime Kuma (they need an account only the owner should create). Outside pinger for the "whole house is down" case.
+
 Also untested: the GitHub-issues poller sketch and gate script in [03-setup-runbook.md](03-setup-runbook.md). The CLI flags in them (`--permission-mode auto`, `--permission-prompts none`, `--max-turns`, `--bare`, `--max-budget-usd`) come from the docs as reported by researchers; confirm against `claude --help` on your install.
 
 The reconciliation of pstack with Pocock's skills is this project's own judgment. Neither author mentions the other.
