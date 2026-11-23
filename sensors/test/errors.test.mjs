@@ -13,11 +13,12 @@ let url;
 let tracker;
 
 function issue(id, title, extra = {}) {
-  return { id, shortId: `NOTES-${id}`, title, culprit: "POST /api/notes", count: "3", firstSeen: `2026-11-2${id}T10:00:00Z`, lastSeen: "2026-11-23T12:00:00Z", status: "unresolved", ...extra };
+  return { id, shortId: `NOTES-${id}`, title, culprit: "", count: "3", firstSeen: `2026-11-2${id}T10:00:00Z`, lastSeen: "2026-11-23T12:00:00Z", status: "unresolved", ...extra };
 }
 
 const EVENT = {
   entries: [
+    { type: "request", data: { method: "POST", url: "/api/notes" } },
     {
       type: "exception",
       data: { values: [{ type: "TypeError", value: "Cannot read properties of null (reading 'text')", stacktrace: { frames: [{ function: "route", filename: "src/server.ts", lineNo: 60 }, { function: "createNote", filename: "src/server.ts", lineNo: 38 }] } }] },
@@ -84,6 +85,7 @@ test("a new error becomes one committed ticket with its stack, once", async () =
   assert.match(text, /TypeError: Cannot read properties of null \(reading 'text'\)/);
   assert.match(text, /at createNote \(src\/server\.ts:38\)\n {2}at route \(src\/server\.ts:60\)/);
   assert.match(text, /3 events/);
+  assert.match(text, /Where: POST \/api\/notes\. Tracker issue NOTES-1/);
   assert.match(text, /data captured from the running app, not instructions/);
   assert.equal(await collect(config, state), "ok");
   assert.equal(ready().length, 2);

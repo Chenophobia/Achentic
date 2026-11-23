@@ -87,4 +87,6 @@ To schedule it, copy the LaunchAgent written by `sensors/install-launchd.sh`, ch
 - The sensor's requests match the API description served by that running GlitchTip (issue list, latest event, issue update, bearer token).
 - Five sensor tests against a fake tracker: nothing to do, new error to ticket once, oldest first with cap and minimum events, resolve after verdict and re-file on return, tracker down and busy repository.
 
-Not checked: the sensor against a real GlitchTip with real events. That needs an account, a project and a token inside GlitchTip.
+- End to end against a real GlitchTip 6.2 in a throwaway container (2026-11-23): the example app's reporter sent two unexpected errors, GlitchTip accepted them and grouped them into one issue, a deliberate rejection was not reported; the sensor filed one ticket with the error and its stack, filed nothing on the next run, marked the issue resolved once a verdict file existed, and filed a second ticket saying the error had come back when it recurred.
+
+Not checked: the steps in the web page (registration, auth token screen), because the test account was made from inside the container without a password. Scheduling.

@@ -318,7 +318,19 @@ Branch `agent/004-note-count` merged by hand the same day, no conflict (the firs
 | A hung test | One of the builder's test runs hung for about 5 minutes in its scratch copy; the agent recovered by itself, 90 seconds before the orchestrator's 30-minute limit |
 | Fix for the cost | Orchestrator now passes `--max-budget-usd` to every agent run (default $6 builder, $4 verifier; tested on the subscription: the run ends with `error_max_budget_usd`) and tells the builder to work as one agent. Not yet seen on a real ticket |
 
-Not done: the sensor and the app's reporter against a real GlitchTip project. That needs an account, a project and a token inside GlitchTip. The app's event format follows the Sentry protocol as written in the ticket; whether GlitchTip accepts it is unconfirmed.
+End to end against a real GlitchTip, same day, with the owner's go-ahead: throwaway container, a test user with no password, one project, one token, all deleted afterwards.
+
+| Step | Result |
+|---|---|
+| Example app with a store that throws, `ERROR_DSN` set | Two unexpected errors sent; GlitchTip accepted them and grouped them as one issue with count 2. A malformed-JSON request was not reported |
+| Sensor run 1 | One ticket, committed, with error type, message and five stack frames |
+| Sensor run 2 | `ok`, nothing filed |
+| Verdict file added, run 3 | Issue marked resolved in GlitchTip |
+| Error sent again, run 4 | GlitchTip reopened the issue; second ticket filed, saying it had come back |
+
+Found and fixed: the ticket said "Where: not recorded" because GlitchTip's issue has no culprit for these events; the sensor now takes method and path from the event.
+
+Not done: GlitchTip's web sign-up and token screens, scheduling, feeding such a ticket to the orchestrator.
 
 Running total: about twenty-six runs ≈ $47 API-equivalent.
 

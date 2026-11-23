@@ -68,7 +68,7 @@ TypeScript strict · no `any` · no comments · no unused code · no duplication
 - A real verifier FAIL sent back through the orchestrator (a forced gate failure has been; see the test log).
 - Quota cost per ticket against the weekly limit.
 - The separate agent user: scripts written, not run (needs `sudo` on the Mac mini).
-- Sensors on a real deployed app. The scheduled live check exists and was tested against local copies only. The uptime check (Uptime Kuma) has a compose file that starts, but its monitors are yours to configure. Error collection (GlitchTip) has a compose file that starts, a sensor tested against a fake tracker, and reporting code in the example app; it has not run against a real GlitchTip project.
+- Sensors on a real deployed app. The scheduled live check exists and was tested against local copies only. The uptime check (Uptime Kuma) has a compose file that starts, but its monitors are yours to configure. Error collection (GlitchTip) has a compose file that starts, a sensor tested against a fake tracker, and reporting code in the example app; the whole chain ran once against a real GlitchTip in a throwaway container.
 - Branch protection on app repos (a GitHub setting, not code).
 
 ## Things learned the hard way

@@ -28,7 +28,7 @@ You write a ticket. A script hands it to an agent that builds it. Plain scripts 
 | Sandbox mode | `ACHENTIC_SANDBOX=1` | Confines every command the agents run | Proven |
 | Live check | `sensors/verify-live.mjs` | Hourly: is the live app working for a user? Files a ticket if not | Built, tested locally |
 | Uptime check | `sensors/uptime-kuma/` | Every minute: is it up? Are the jobs still running? Alerts only | Built, setup is yours |
-| Error collection | `sensors/glitchtip/`, `sensors/errors.mjs` | Hourly: any new error in the live app? Files a ticket per error | Built, tested against a fake |
+| Error collection | `sensors/glitchtip/`, `sensors/errors.mjs` | Hourly: any new error in the live app? Files a ticket per error | Built, ran end to end once |
 | CI | `.github/workflows/ci.yml` | Runs the gates on GitHub on every push | Running |
 | Agent user | `setup/agent-user/` | A separate macOS account that owns nothing valuable | Scripts written, not run |
 
@@ -196,7 +196,7 @@ One cost: Chrome cannot start inside the sandbox. The orchestrator runs the brow
 | After merge | GitHub Actions | Same gates, clean machine |
 | Live | Uptime check | Down or unreachable: alert |
 | Live | Live check | Up but broken: ticket, back into the loop |
-| Live | Error collection (GlitchTip) | New error: ticket. Built, not yet run against a real GlitchTip project |
+| Live | Error collection (GlitchTip) | New error: ticket. Ran end to end once against a real GlitchTip |
 
 ## 11. Proven and not
 
