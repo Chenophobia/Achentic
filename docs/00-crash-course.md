@@ -118,7 +118,7 @@ Pocock's skills are never called by the orchestrator. You type them yourself whe
 | Live check, Uptime Kuma, heartbeats, phone alerts |
 
 - One ticket costs about **$3 to $4 API-equivalent**. On the subscription you are not billed that; it comes out of the weekly limit. How much of the weekly limit is not measured yet.
-- All test runs so far, about 24: roughly $31 API-equivalent.
+- All runs so far, about 26: roughly $47 API-equivalent, $15 of it one ticket.
 - The $20 API budget is used by nothing that is built. The run wrapper removes `ANTHROPIC_API_KEY` so a run cannot fall back to paid use.
 - Brakes: 3 tickets a day, 3 attempts a ticket, one ticket at a time, 2 sensor tickets a day, and a spending cap per agent run ($6 builder, $4 verifier).
 - One ticket went far over: $13.60 for the builder, because pstack built three competing versions on larger models. The cap and a one-agent instruction were added after it. Run `/pstack:setup-pstack` with a small budget in each app repo.
