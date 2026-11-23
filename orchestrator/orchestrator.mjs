@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { existsSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { beat } from "./lib/heartbeat.mjs";
@@ -42,7 +43,8 @@ function status(config, state) {
   console.log(`ready: ${queue(config, state).join(", ") || "none"}`);
   for (const [id, entry] of Object.entries(state.tickets)) {
     const detail = entry.status === "review" ? entry.verdict : entry.reason.split("\n")[0];
-    console.log(`${id}: ${entry.status} on ${entry.branch} — ${detail}`);
+    const merged = entry.status === "review" && existsSync(join(config.repo, "docs/verdicts", `verdict-${id}.md`));
+    console.log(`${id}: ${merged ? "merged" : entry.status} on ${entry.branch} — ${detail}`);
   }
 }
 
@@ -64,6 +66,7 @@ async function main() {
   if (action === undefined || flag === -1 || rest[flag + 1] === undefined) throw new Error(USAGE);
   const config = configFor(resolve(rest[flag + 1]));
   const state = openState(config.home);
+  writeFileSync(join(config.home, "repo"), config.repo);
   if (action === "run") {
     const result = await runOnce(config, state);
     state.log(`run: ${result}`);

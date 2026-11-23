@@ -6,6 +6,18 @@ A personal agentic development cycle: describe an idea, agents build it, scripts
 
 **Status, 2026-11-23:** the core loop has been run by hand, headless, on a small example app and it works. A TypeScript-strict template with six tested gates exists, and an agent has rebuilt the example on it with every gate green. An orchestrator script now runs the loop for one ticket end to end; it has done so once, started by hand. It is not scheduled yet, and no real app has been through it.
 
+## Quick start
+
+On any Mac: clone this repository, open Claude Code in it and say **"set this machine up"**. `CLAUDE.md` points it at [setup/SETUP.md](setup/SETUP.md). Or by hand:
+
+```sh
+sh setup/doctor.sh              # what is missing on this Mac
+sh setup/new-project.sh my-app  # new project from the template, gates green, first commit
+sh setup/status.sh              # jobs, queue, cost, last log lines
+```
+
+Deploying on the Mac mini from start to finish: [Deploy on Mac mini.pptx](Deploy%20on%20Mac%20mini.pptx), 14 slides.
+
 ## Start here
 
 1. [docs/00-crash-course.md](docs/00-crash-course.md) — 15 minutes: the parts, what talks to what, how agents are called, what uses tokens, how to run it by hand and 24/7.
@@ -27,6 +39,9 @@ A personal agentic development cycle: describe an idea, agents build it, scripts
 | [docs/07-code-standards.md](docs/07-code-standards.md) | Standards, enforcers, CI |
 | [orchestrator/](orchestrator) | The script that runs the loop: one ticket per run, retries, verdict, launchd installer, tests |
 | [sensors/](sensors) | Scripts that watch a deployed app and file tickets. First one: the scheduled live check |
+| [setup/](setup) | `SETUP.md` (the playbook), `doctor.sh`, `new-project.sh`, `status.sh` |
+| [Deploy on Mac mini.pptx](Deploy%20on%20Mac%20mini.pptx) | Six stages from an empty Mac mini to running unattended, with what to check and where the logs are |
+| [CLAUDE.md](CLAUDE.md) | What Claude Code does in this repository, and what it leaves to you |
 | [setup/agent-user/](setup/agent-user) | Sandbox mode and the scripts for a separate macOS user to run everything as |
 | [template/](template) | Starting point for a new app: TypeScript strict, six gates, CI workflow, agent rules |
 | [examples/tiny-notes-ts/](examples/tiny-notes-ts) | The same app rebuilt in strict TypeScript on the template by one pstack run, with its verdict |

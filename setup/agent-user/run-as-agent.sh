@@ -2,7 +2,7 @@
 set -eu
 
 if [ $# -lt 2 ]; then
-  echo "usage: run-as-agent.sh <orchestrator|sensor> <app-repo> [url]" >&2
+  echo "usage: run-as-agent.sh <orchestrator|sensor|errors> <app-repo> [url] [org] [project]" >&2
   exit 1
 fi
 
@@ -22,12 +22,19 @@ fi
 
 export ACHENTIC_SANDBOX=${ACHENTIC_SANDBOX:-1}
 
+if git -C "$repo" remote get-url origin >/dev/null 2>&1; then
+  git -C "$repo" pull -q --rebase || echo "could not pull $repo; running with what is here" >&2
+fi
+
 case "$job" in
   orchestrator)
     exec node "$here/orchestrator/orchestrator.mjs" run --repo "$repo"
     ;;
   sensor)
     exec node "$here/sensors/verify-live.mjs" --repo "$repo" --url "$3"
+    ;;
+  errors)
+    exec node "$here/sensors/errors.mjs" --repo "$repo" --url "$3" --org "$4" --project "$5"
     ;;
   *)
     echo "unknown job: $job" >&2

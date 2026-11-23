@@ -338,6 +338,18 @@ Running total: about twenty-six runs ≈ $47 API-equivalent.
 
 Changed later the same day at the owner's request: pstack runs at its defaults. The one-agent instruction was removed, the per-run guard raised to $25 (builder) and $8 (verifier), the builder timeout to 60 minutes. Reason given: a Max plan, no need for a small budget. Not yet run on a ticket with these settings.
 
+## Machine setup scripts — 2026-11-23, `setup/`
+
+| Step | Result |
+|---|---|
+| `setup/doctor.sh` on a MacBook | Ran; correctly reported one thing missing (no global git identity) and everything else ok |
+| `setup/new-project.sh` into a scratch folder | Project created from the committed template, both plugins enabled for it, `npm ci`, gates green, first commit, clean tree |
+| `setup/status.sh` against the sandbox state | Jobs (none installed), per-app queue with merged tickets shown as merged, runs and cost for today and seven days, last log lines, containers |
+| `run-as-agent.sh` pulling before a run | With a local bare remote: new ticket pulled, a locally committed sensor ticket kept on top |
+| `CLAUDE.md` + `setup/SETUP.md` | Written. Not yet tried by a fresh Claude session on another Mac |
+
+Not done: any of it on the Mac mini; the `errors` job through `install-daemon.sh`; a fresh session actually following the playbook.
+
 Also untested: the GitHub-issues poller sketch and gate script in [03-setup-runbook.md](03-setup-runbook.md). The CLI flags in them (`--permission-mode auto`, `--permission-prompts none`, `--max-turns`, `--bare`, `--max-budget-usd`) come from the docs as reported by researchers; confirm against `claude --help` on your install.
 
 The reconciliation of pstack with Pocock's skills is this project's own judgment. Neither author mentions the other.
