@@ -4,7 +4,7 @@ A personal agentic development cycle: describe an idea, agents build it, scripts
 
 **pstack is the engine.** Matt Pocock's skills are used at five named points and nowhere else. Deterministic gates run on GitHub Actions. AI work runs on a Mac mini on a Claude Max subscription.
 
-**Status, 2026-11-22:** the core loop has been run by hand, headless, on a small example app and it works. A TypeScript-strict app template with six tested gates exists. Nothing runs unattended yet, and no real app has been through it.
+**Status, 2026-11-23:** the core loop has been run by hand, headless, on a small example app and it works. A TypeScript-strict template with six tested gates exists, and an agent has rebuilt the example on it with every gate green. Nothing runs unattended yet, and no real app has been through it.
 
 ## Start here
 
@@ -26,6 +26,7 @@ A personal agentic development cycle: describe an idea, agents build it, scripts
 | [docs/06-which-tool-when.md](docs/06-which-tool-when.md) | pstack vs Pocock, decided |
 | [docs/07-code-standards.md](docs/07-code-standards.md) | Standards, enforcers, CI |
 | [template/](template) | Starting point for a new app: TypeScript strict, six gates, CI workflow, agent rules |
+| [examples/tiny-notes-ts/](examples/tiny-notes-ts) | The same app rebuilt in strict TypeScript on the template by one pstack run, with its verdict |
 | [examples/tiny-notes/](examples/tiny-notes) | The app the loop was tested on, with its tickets, verify skill, generated spec and the two non-author verdicts |
 | [reports/](reports) | Full research report with sources |
 | [research_notes/](research_notes) | Raw research notes |
@@ -52,10 +53,10 @@ TypeScript strict · no `any` · no comments · no unused code · no duplication
 - An agent driving a real browser with zero dependencies.
 - A non-author verdict that found two crashes the author missed, then a fix and a clean re-verdict.
 - Template gates: six out of six fail on the bad change they exist to catch.
+- An agent building under those gates: strict types, no `any`, no comments, and a complexity gate that forced a real restructure instead of a config edit.
 
 ## Not yet
 
-- An agent building on the TypeScript template. The example app is plain JavaScript.
 - A real app with a database, auth and dependencies.
 - Anything unattended: orchestrator, schedule, preview, deploy.
 - Quota cost per ticket against the weekly limit.
@@ -71,3 +72,4 @@ TypeScript strict · no `any` · no comments · no unused code · no duplication
 - An author agent's "nothing outstanding" was wrong once. The verdict gate is not optional.
 - A raw line-count gate gets gamed by deleting blank lines. Use a formatter.
 - pstack advises standards; it enforces none. Scripts do.
+- A new repo needs `claude plugin install … --scope project` run inside it; copying settings is not enough.

@@ -203,6 +203,25 @@ Branch state: `agent/005-single-request-crashes` and `agent/003-routing-refactor
 
 Day total: eleven headless runs ≈ $17 API-equivalent. Share of the weekly Max limit still unmeasured.
 
+## First build on the TypeScript template — 2026-11-23, `examples/tiny-notes-ts`
+
+Ticket: rebuild Tiny Notes in strict TypeScript on `template/`, behaviour identical to the JavaScript app, gate configuration off limits.
+
+| Step | Result |
+|---|---|
+| First attempt | `Unknown command: /pstack:poteto-mode`, zero turns. A copied `.claude/settings.json` does not activate plugins in a new repo; `claude plugin install … --scope project` must be run inside it |
+| Build (Sonnet) | 64 turns, 384 s, API-equivalent $2.83. One commit: `src/store.ts`, `src/server.ts`, `src/main.ts`, 6 tests. No gate or CI file touched, no process left |
+| Gate failures on the way, as the agent reported | Import order and formatting (auto-fixed). Complexity gate rejected the request handler twice (32, then 21, limit 15); the agent split it into `serveIndex`, `createNote` and `route` and said the gate was right |
+| My check | Six gates green. Verify drive 3/3. Sixteen responses identical to the JavaScript app, including `GET //` and a `null` body |
+| Standards | No `any`, no comments, JSON body typed `unknown` and narrowed, every function typed. Three `as` assertions in `src/` |
+| Non-author verdict (Opus) | 25 turns, 172 s, API-equivalent $1.81. `PASS`. 28 further requests against both apps, 0 differences. Judged each `as` and `unknown` sound, with a run behind each. Cleaned up one stray process left by its own comparison harness |
+
+Settles: an agent builds to the TypeScript standards when the gates require them, and resolves a gate failure by changing code, not configuration. Does not settle: anything beyond a 100-line server.
+
+New gap: nothing limits `as` assertions.
+
+Running total: fourteen headless runs ≈ $21 API-equivalent. Share of the weekly Max limit still unmeasured.
+
 Also untested: the poller script and gate script in [03-setup-runbook.md](03-setup-runbook.md). The CLI flags in them (`--permission-mode auto`, `--permission-prompts none`, `--max-turns`, `--bare`, `--max-budget-usd`) come from the docs as reported by researchers; confirm against `claude --help` on your install.
 
 The reconciliation of pstack with Pocock's skills is this project's own judgment. Neither author mentions the other.

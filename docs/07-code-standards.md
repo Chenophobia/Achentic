@@ -33,7 +33,7 @@ Every rule has one enforcer. If a rule has none, it is a wish.
 | Feature works for a user | `verify-<app>` drive script | CI (example app); orchestrator | Yes, on the example app |
 | Change judged by a non-author | Orchestrator runs a fresh Opus process | Orchestrator (not built) | Done by hand twice |
 | Agent cannot weaken a gate | Branch protection + required check; agent token without workflow permission; PRs touching gate files go to a human | GitHub settings (yours to set) | Not yet |
-| pstack for code, Pocock for five named uses | Orchestrator prompts; `CLAUDE.md` | See [06-which-tool-when.md](06-which-tool-when.md) | Not yet |
+| pstack for code, Pocock for five named uses | Orchestrator prompts; `CLAUDE.md` | See [06-which-tool-when.md](06-which-tool-when.md) | Held in one build with both plugins enabled |
 
 ## CI
 
@@ -55,6 +55,7 @@ Still yours to do in GitHub settings for each app repo: protect the default bran
 
 ## Known gaps
 
-- The example app (`examples/tiny-notes`) is plain JavaScript, written before the TypeScript template existed. Its gates are the simpler set in its own `scripts/gates.sh`. No agent has yet built anything on the template.
+- `examples/tiny-notes` is plain JavaScript, written before the template existed, with its own simpler gates. `examples/tiny-notes-ts` is the same app rebuilt on the template by one headless pstack run (2026-11-23): all six gates green, verdict PASS. One small app is the whole evidence so far.
+- Type assertions (`as X`) have no gate. Three appeared in that build; the verifier judged each sound.
 - The no-comments gate does not see files that contain only types.
 - A raw line budget was gamed once by deleting blank lines; the template uses a formatter instead, which removes that trick.

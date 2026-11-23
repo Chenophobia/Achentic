@@ -30,6 +30,34 @@ jobs:
       - run: npm ci
       - run: npm run gates
 
+  typescript-example:
+    name: TypeScript example gates and browser verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: examples/tiny-notes-ts
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: examples/tiny-notes-ts/package-lock.json
+      - run: npm ci
+      - name: Gates
+        run: npm run gates
+      - name: Drive the running app in headless Chrome
+        run: node tools/verify/drive.mjs all
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-evidence-ts
+          path: examples/tiny-notes-ts/.verify-evidence/
+          include-hidden-files: true
+          if-no-files-found: warn
+
   example-gates-and-verify:
     name: Example app gates and browser verification
     runs-on: ubuntu-latest
