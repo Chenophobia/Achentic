@@ -23,7 +23,7 @@ import {
   closeTab,
 } from "./lib/harness.mjs";
 
-const FEATURES = ["add-delete", "dark-mode", "resilience"];
+const FEATURES = ["add-delete", "dark-mode", "length-limit", "resilience"];
 const feature = process.argv[2];
 
 if (!feature || (feature !== "all" && !FEATURES.includes(feature))) {
@@ -137,6 +137,62 @@ async function runDarkMode({ cdp, log, appPort }) {
   await log(`toggled back to original theme: ${reverted}`);
 }
 
+async function runLengthLimit({ cdp, log, appPort }) {
+  await cdp.screenshot(join(evidenceDir, "length-limit-01-loaded.png"));
+
+  const typed = await cdp.evalExpr(`
+    (() => {
+      const input = document.querySelector("#text");
+      input.value = "a".repeat(281);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      return {
+        length: input.value.length,
+        remaining: document.querySelector("#remaining").textContent,
+      };
+    })()
+  `);
+  await log(`set a 281-char value via the DOM; input clamped to ${typed.length}, counter reads "${typed.remaining}"`);
+  if (typed.length !== 280) throw new Error(`expected the input to clamp to 280 chars, got ${typed.length}`);
+  if (typed.remaining !== "0 characters left") {
+    throw new Error(`expected the counter to read "0 characters left", got "${typed.remaining}"`);
+  }
+  await cdp.screenshot(join(evidenceDir, "length-limit-02-clamped.png"));
+
+  const over = await fetch(`http://localhost:${appPort}/api/notes`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ text: "b".repeat(281) }),
+  });
+  await log(`POST /api/notes with 281 chars -> ${over.status}`);
+  if (over.status !== 400) throw new Error(`expected 400 for a 281-char note, got ${over.status}`);
+  const overBody = await over.json();
+  if (typeof overBody.error !== "string") {
+    throw new Error(`expected a JSON error body, got ${JSON.stringify(overBody)}`);
+  }
+  await log(`rejection body: ${JSON.stringify(overBody)}`);
+
+  const afterOver = await (await fetch(`http://localhost:${appPort}/api/notes`)).json();
+  if (afterOver.some((n) => n.text.length > 280)) {
+    throw new Error("a note longer than 280 chars was stored");
+  }
+  await log("verified via API: the 281-char note was not stored");
+
+  const exact = "c".repeat(280);
+  const ok = await fetch(`http://localhost:${appPort}/api/notes`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ text: exact }),
+  });
+  await log(`POST /api/notes with 280 chars -> ${ok.status}`);
+  if (ok.status !== 201) throw new Error(`expected 201 for a 280-char note, got ${ok.status}`);
+
+  const afterExact = await (await fetch(`http://localhost:${appPort}/api/notes`)).json();
+  if (!afterExact.some((n) => n.text === exact)) {
+    throw new Error("the 280-char note was not stored");
+  }
+  await log("verified via API: the 280-char note is stored");
+}
+
 async function runBrowserFeature(name) {
   const { log, reset } = makeLogger(name);
   await reset();
@@ -168,6 +224,7 @@ async function runBrowserFeature(name) {
 
     if (name === "add-delete") await runAddDelete({ cdp, log, appPort });
     if (name === "dark-mode") await runDarkMode({ cdp, log, appPort });
+    if (name === "length-limit") await runLengthLimit({ cdp, log, appPort });
 
     await log(`feature "${name}" PASSED`);
   } finally {
@@ -232,6 +289,16 @@ async function runResilience() {
     const afterNullBody = await fetch(`http://localhost:${appPort}/api/notes`);
     await log(`follow-up GET /api/notes -> ${afterNullBody.status}`);
     if (afterNullBody.status !== 200) throw new Error(`server stopped serving after a JSON null body, got ${afterNullBody.status}`);
+
+    const health = await fetch(`http://localhost:${appPort}/api/health`);
+    const healthBody = await health.json();
+    await log(`GET /api/health -> ${health.status} ${JSON.stringify(healthBody)}`);
+    if (health.status !== 200) throw new Error(`expected 200 for GET /api/health, got ${health.status}`);
+    if (healthBody.status !== "ok") throw new Error(`expected {"status":"ok"} from /api/health, got ${JSON.stringify(healthBody)}`);
+
+    const healthWrongMethod = await fetch(`http://localhost:${appPort}/api/health`, { method: "POST" });
+    await log(`POST /api/health -> ${healthWrongMethod.status}`);
+    if (healthWrongMethod.status !== 404) throw new Error(`expected 404 for POST /api/health, got ${healthWrongMethod.status}`);
 
     await log(`feature "${name}" PASSED`);
   } finally {

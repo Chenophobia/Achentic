@@ -46,6 +46,27 @@ test("rejects an empty note", async () => {
   });
 });
 
+test("rejects a note longer than 280 characters", async () => {
+  await withApp(async (base) => {
+    const res = await post(base, { text: "a".repeat(281) });
+    assert.equal(res.status, 400);
+    const body = (await res.json()) as { error: string };
+    assert.equal(typeof body.error, "string");
+
+    const listed = (await (await fetch(`${base}/api/notes`)).json()) as Note[];
+    assert.deepEqual(listed, []);
+  });
+});
+
+test("accepts a note of exactly 280 characters", async () => {
+  await withApp(async (base) => {
+    const res = await post(base, { text: "a".repeat(280) });
+    assert.equal(res.status, 201);
+    const created = (await res.json()) as Note;
+    assert.equal(created.text.length, 280);
+  });
+});
+
 test("responds 400 to invalid JSON and keeps serving after", async () => {
   await withApp(async (base) => {
     const bad = await fetch(`${base}/api/notes`, {
@@ -77,6 +98,21 @@ test("responds 400 to a JSON null body and keeps serving after", async () => {
 
     const after = await fetch(`${base}/api/notes`);
     assert.equal(after.status, 200);
+  });
+});
+
+test("responds ok to a health check", async () => {
+  await withApp(async (base) => {
+    const health = await fetch(`${base}/api/health`);
+    assert.equal(health.status, 200);
+    assert.deepEqual(await health.json(), { status: "ok" });
+  });
+});
+
+test("responds 404 to an unsupported method on the health path", async () => {
+  await withApp(async (base) => {
+    const bad = await fetch(`${base}/api/health`, { method: "POST" });
+    assert.equal(bad.status, 404);
   });
 });
 

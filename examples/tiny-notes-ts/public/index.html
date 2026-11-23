@@ -23,16 +23,29 @@
       <button id="theme-toggle" type="button"></button>
     </header>
     <form id="new-note">
-      <input id="text" placeholder="Write a note" autocomplete="off" />
+      <input id="text" placeholder="Write a note" autocomplete="off" maxlength="280" />
       <button>Add</button>
     </form>
+    <p id="remaining" aria-live="polite"></p>
     <ul id="notes"></ul>
     <script type="module">
+      const MAX_NOTE_LENGTH = 280;
       const list = document.querySelector("#notes");
       const form = document.querySelector("#new-note");
       const input = document.querySelector("#text");
+      const remaining = document.querySelector("#remaining");
       const root = document.documentElement;
       const themeToggle = document.querySelector("#theme-toggle");
+
+      function updateRemaining() {
+        if (input.value.length > MAX_NOTE_LENGTH) {
+          input.value = input.value.slice(0, MAX_NOTE_LENGTH);
+        }
+        remaining.textContent = `${MAX_NOTE_LENGTH - input.value.length} characters left`;
+      }
+
+      input.addEventListener("input", updateRemaining);
+      updateRemaining();
 
       function activeTheme() {
         const stored = localStorage.getItem("theme");
@@ -79,6 +92,7 @@
           body: JSON.stringify({ text: input.value }),
         });
         input.value = "";
+        updateRemaining();
         render();
       });
 

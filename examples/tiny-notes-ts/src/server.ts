@@ -7,6 +7,8 @@ import { createStore } from "./store.ts";
 
 const indexPath = fileURLToPath(new URL("../public/index.html", import.meta.url));
 
+const MAX_NOTE_LENGTH = 280;
+
 function json(res: ServerResponse, status: number, body: unknown): void {
   res.writeHead(status, { "content-type": "application/json" });
   res.end(JSON.stringify(body));
@@ -38,7 +40,12 @@ async function createNote(req: IncomingMessage, res: ServerResponse, store: Stor
     json(res, 400, { error: "text is required" });
     return;
   }
-  json(res, 201, store.add(text.trim()));
+  const trimmed = text.trim();
+  if (trimmed.length > MAX_NOTE_LENGTH) {
+    json(res, 400, { error: `text must be at most ${MAX_NOTE_LENGTH} characters` });
+    return;
+  }
+  json(res, 201, store.add(trimmed));
 }
 
 async function route(req: IncomingMessage, res: ServerResponse, store: Store): Promise<void> {
@@ -46,6 +53,10 @@ async function route(req: IncomingMessage, res: ServerResponse, store: Store): P
 
   if (req.method === "GET" && url.pathname === "/") {
     await serveIndex(res);
+    return;
+  }
+  if (req.method === "GET" && url.pathname === "/api/health") {
+    json(res, 200, { status: "ok" });
     return;
   }
   if (req.method === "GET" && url.pathname === "/api/notes") {

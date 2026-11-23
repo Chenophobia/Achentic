@@ -257,6 +257,8 @@ Settles: a resumed real session understands the orchestrator's finding and fixes
 
 Running total: nineteen headless runs ≈ $28 API-equivalent.
 
+Merge of both branches, 2026-11-23, by hand: code merged without conflict. One conflict in ticket files: git read the `tickets/ready` → `tickets/done` move on one branch as a folder rename and tried to move the other, still-open ticket with it. Merged result: six gates green, 10 tests, drive 4 of 4. Exported to `examples/tiny-notes-ts`.
+
 Also untested: the GitHub-issues poller sketch and gate script in [03-setup-runbook.md](03-setup-runbook.md). The CLI flags in them (`--permission-mode auto`, `--permission-prompts none`, `--max-turns`, `--bare`, `--max-budget-usd`) come from the docs as reported by researchers; confirm against `claude --help` on your install.
 
 The reconciliation of pstack with Pocock's skills is this project's own judgment. Neither author mentions the other.
