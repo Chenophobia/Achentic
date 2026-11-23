@@ -28,6 +28,9 @@ fi
 
 case "$job" in
   orchestrator)
+    if [ -n "${ACHENTIC_GITHUB_REPO:-}" ]; then
+      node "$here/intake/issues.mjs" --repo "$repo" --github "$ACHENTIC_GITHUB_REPO" || true
+    fi
     exec node "$here/orchestrator/orchestrator.mjs" run --repo "$repo"
     ;;
   sensor)

@@ -1,6 +1,6 @@
 # Uptime check (Uptime Kuma)
 
-Answers one question every minute: is each app up? An outage alerts your phone. It never files a ticket: an app that is down is an operations problem, and an agent editing code will not fix a dead tunnel or a full disk.
+Answers one question every minute: is each app up? An outage posts to your Discord channel. It never files a ticket: an app that is down is an operations problem, and an agent editing code will not fix a dead tunnel or a full disk.
 
 It also watches the watchers. The orchestrator and the live check ping it after every run; if the pings stop, you hear about it.
 
@@ -12,7 +12,7 @@ Needs Docker (Docker Desktop or OrbStack).
 docker compose -f sensors/uptime-kuma/compose.yml up -d
 ```
 
-Then open http://localhost:3001. It listens on the Mac mini only. To reach it from your phone, put it behind your Cloudflare Tunnel with Cloudflare Access in front; do not publish it bare.
+Then open http://localhost:3001. It listens on the Mac mini only. To reach it from elsewhere, put it behind your Cloudflare Tunnel with Cloudflare Access in front; do not publish it bare.
 
 Data lives in the Docker volume `achentic-uptime_uptime-kuma-data`. The image is pinned to 2.5.12; change the tag in `compose.yml` to update.
 
@@ -21,7 +21,7 @@ Data lives in the Docker volume `achentic-uptime_uptime-kuma-data`. The image is
 These steps follow Uptime Kuma's own documentation. I started the container and reached the setup page; I did not click through the rest, because the admin account is yours to create.
 
 1. Choose SQLite. Create the admin account.
-2. Settings → Notifications → add one of type ntfy with your topic. Use the same topic as `ACHENTIC_NTFY_URL`. Tick "apply on all existing monitors" and default enabled.
+2. Settings → Notifications → add one of type Discord with the same webhook URL as `ACHENTIC_DISCORD_WEBHOOK_URL`. Tick "apply on all existing monitors" and default enabled.
 3. One monitor per app. Type HTTP(s), the app's health address (for example `https://notes.example.com/api/health`), interval 60 seconds, retries 2. Use the public address so the tunnel is checked too.
 4. Optional second monitor per app on the local address (`http://host.docker.internal:<port>/api/health`). Public down and local up means the tunnel; both down means the app.
 5. Two monitors of type Push, one named "orchestrator" with heartbeat interval 2100 seconds (it runs every 1800), one named "live check" with 3900 seconds (it runs every 3600). Copy each push address.

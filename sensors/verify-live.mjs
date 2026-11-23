@@ -27,7 +27,7 @@ async function main() {
     url: url.replace(/\/+$/, ""),
     base: env.ACHENTIC_BASE ?? "main",
     command: env.ACHENTIC_LIVE_CHECK ?? "node tools/verify/drive.mjs live",
-    ntfyUrl: env.ACHENTIC_NTFY_URL,
+    discordUrl: env.ACHENTIC_DISCORD_WEBHOOK_URL,
     confirmations: number("ACHENTIC_SENSOR_CONFIRMATIONS", 2),
     dailyCap: number("ACHENTIC_SENSOR_DAILY_CAP", 2),
     timeoutMs: number("ACHENTIC_SENSOR_MINUTES", 5) * 60_000,

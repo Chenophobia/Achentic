@@ -34,7 +34,7 @@ Do these in order. Each has its own guide; this table is the order and the check
 | 8 | You | Schedule the live check: `… install-daemon.sh agent sensor /Users/agent/work/<app> <address>` | [../sensors/README.md](../sensors/README.md) | Loaded; first run logs `ok` |
 | 9 | You | Start Uptime Kuma, create its admin, add monitors and the two push monitors | [../sensors/uptime-kuma/README.md](../sensors/uptime-kuma/README.md) | Monitors green |
 | 10 | You | Start GlitchTip, register, create the project and token, set `ERROR_DSN` for the app, schedule `errors` | [../sensors/glitchtip/README.md](../sensors/glitchtip/README.md) | A test error shows up as an issue |
-| 11 | You | Pick an ntfy topic, add `ACHENTIC_NTFY_URL=…` to the agent's `~/.achentic/env` | — | A blocked or passed ticket reaches the phone |
+| 11 | You | Create a Discord webhook; add `ACHENTIC_DISCORD_WEBHOOK_URL=…` and `ACHENTIC_GITHUB_REPO=<owner>/<name>` to the agent's `~/.achentic/env` | [../intake/README.md](../intake/README.md) | An issue you open with the label `agent` shows up in Discord as "queued", then step by step |
 | 12 | You | On GitHub: protect `main`, require the `gates` check | — | A direct push to `main` is refused |
 
 Claude's part in level 2: explain each step, check the "done when" with `sh setup/status.sh` and the logs, and read errors. It does not run the `sudo` steps or handle the token.

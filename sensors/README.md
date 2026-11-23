@@ -45,7 +45,7 @@ What one run does:
 | Time allowed for the check | 5 minutes | `ACHENTIC_SENSOR_MINUTES` |
 | Check command | `node tools/verify/drive.mjs live` | `ACHENTIC_LIVE_CHECK` |
 
-`ACHENTIC_HOME`, `ACHENTIC_BASE` and `ACHENTIC_NTFY_URL` mean the same as for the orchestrator. `ACHENTIC_SENSOR_HEARTBEAT_URL`, if set, is pinged with the result after every run.
+`ACHENTIC_HOME`, `ACHENTIC_BASE` and `ACHENTIC_DISCORD_WEBHOOK_URL` mean the same as for the orchestrator. `ACHENTIC_SENSOR_HEARTBEAT_URL`, if set, is pinged with the result after every run.
 
 Two failures count as the same when the flow and the message match after numbers are removed.
 

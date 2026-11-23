@@ -350,6 +350,21 @@ Changed later the same day at the owner's request: pstack runs at its defaults. 
 
 Not done: any of it on the Mac mini; the `errors` job through `install-daemon.sh`; a fresh session actually following the playbook.
 
+## Issue intake and Discord progress — 2026-11-23, `intake/`, `orchestrator/lib/notify.mjs`
+
+Requested by the owner in place of phone alerts: create work from anywhere, see which step each feature is at.
+
+| Step | Result |
+|---|---|
+| Intake tests against a fake GitHub and fake Discord | 3 of 3: owner's labelled issue to one ticket and one post; a stranger's issue ignored and reported once, pull requests skipped; token sent when given, GitHub down, repository busy |
+| Notifier test | Message format, mentions switched off, long bodies trimmed, a failing webhook never fails the run |
+| Orchestrator test for the announced sequence | Ten posts in order for a ticket that fails the gates once and then passes |
+| Intake against the real GitHub API, read-only, public repository | Answered; no labelled issues, nothing filed |
+
+ntfy is gone; `ACHENTIC_NTFY_URL` is replaced by `ACHENTIC_DISCORD_WEBHOOK_URL`.
+
+Not done: a real issue through the intake, a real Discord channel, the issue form rendered on GitHub. Nothing writes back to the issue.
+
 Also untested: the GitHub-issues poller sketch and gate script in [03-setup-runbook.md](03-setup-runbook.md). The CLI flags in them (`--permission-mode auto`, `--permission-prompts none`, `--max-turns`, `--bare`, `--max-budget-usd`) come from the docs as reported by researchers; confirm against `claude --help` on your install.
 
 The reconciliation of pstack with Pocock's skills is this project's own judgment. Neither author mentions the other.

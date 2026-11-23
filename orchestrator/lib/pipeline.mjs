@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { build, judge } from "./agents.mjs";
+import { notify } from "./notify.mjs";
 import { git, run, tail } from "./proc.mjs";
 
 const PROTECTED = [
@@ -96,20 +97,29 @@ async function verdict(config, state, job, attempt) {
   return { kind: "pass", verdict: result.verdict, text: result.text };
 }
 
+function progress(label, step) {
+  if (step.kind === "ok") return `${label} passed`;
+  if (step.kind === "pass") return `verdict ${step.verdict}`;
+  if (step.kind === "retry") return `${label} failed, sent back to the builder`;
+  return `${label} stopped the ticket`;
+}
+
 async function attemptOnce(config, state, job, attempt, feedback, session) {
+  const tag = `${basename(config.repo)} ${job.id}: attempt ${attempt}`;
+  await notify(config, state, `${tag} · building`);
   const result = await build(config, { ...job, feedback, session });
   record(state, job.id, "builder", attempt, config.builderModel, result);
   if (!result.ok) return { step: block(`Builder run failed: ${result.error}`), session };
   const checks = [
-    () => inspect(config),
-    () => command(config, "Gates", config.gates),
-    () => verify(config),
-    () => verdict(config, state, job, attempt),
+    ["branch checks", () => inspect(config)],
+    ["gates", () => command(config, "Gates", config.gates)],
+    ["browser drive", () => verify(config)],
+    ["verifier", () => verdict(config, state, job, attempt)],
   ];
   let step = ok();
-  for (const check of checks) {
+  for (const [label, check] of checks) {
     step = await check();
-    state.log(`${job.id} attempt ${attempt}: ${step.kind}${step.message ? ` — ${step.message.split("\n")[0]}` : ""}`);
+    await notify(config, state, `${tag} · ${progress(label, step)}`, step.kind === "retry" || step.kind === "block" ? step.message : "");
     if (step.kind !== "ok") break;
   }
   return { step, session: result.session ?? session };
@@ -147,16 +157,6 @@ function leaveBranch(config, id) {
   git(config.repo, "switch", config.base);
 }
 
-async function notify(config, state, title, body) {
-  state.log(`${title}: ${body.split("\n")[0]}`);
-  if (config.ntfyUrl === undefined) return;
-  try {
-    await fetch(config.ntfyUrl, { method: "POST", headers: { Title: title }, body: tail(body, 20) });
-  } catch (error) {
-    state.log(`notify failed: ${error}`);
-  }
-}
-
 export function queue(config, state) {
   const dir = join(config.repo, "tickets/ready");
   if (!existsSync(dir)) return [];
@@ -186,13 +186,13 @@ async function handle(config, state, id) {
   }
   state.countStart();
   git(config.repo, "switch", "-c", job.branch, config.base);
-  state.log(`${id}: started on ${job.branch}`);
+  await notify(config, state, `${name} ${id}: started`, `Branch ${job.branch}`);
   try {
     const result = await work(config, state, job);
     if (result.kind === "pass") {
       close(config, job, result);
       state.setTicket(id, { status: "review", branch: job.branch, verdict: result.verdict, attempts: result.attempts });
-      await notify(config, state, `${name} ${id}: ${result.verdict}`, `Branch ${job.branch} is ready to merge.\n${result.text}`);
+      await notify(config, state, `${name} ${id}: ready to merge (${result.verdict})`, `Branch ${job.branch}, ${result.attempts} attempt(s). Verdict in docs/verdicts/verdict-${id}.md`);
       return "review";
     }
     state.setTicket(id, { status: "blocked", branch: job.branch, reason: result.message, attempts: result.attempts });

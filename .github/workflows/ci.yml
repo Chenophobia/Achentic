@@ -102,7 +102,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node --test orchestrator/test/orchestrator.test.mjs orchestrator/test/heartbeat.test.mjs
+      - run: node --test orchestrator/test/orchestrator.test.mjs orchestrator/test/heartbeat.test.mjs orchestrator/test/notify.test.mjs intake/test/issues.test.mjs
 
   sensor-tests:
     name: Sensor tests

@@ -1,0 +1,35 @@
+name: Ticket for the agents
+description: A feature, fix or change for the orchestrator to build. Only issues opened by the repository owner are picked up.
+labels: ["agent"]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: One sentence. What can a user do after this, or what must never happen again?
+    validations:
+      required: true
+  - type: textarea
+    id: done-check
+    attributes:
+      label: Done-check
+      description: What you could observe on the running app that passes or fails. No "works well".
+    validations:
+      required: true
+  - type: textarea
+    id: proof
+    attributes:
+      label: Proof wanted
+      description: What evidence you want to see.
+      value: |
+        - `npm run gates` output, green.
+        - A check in the verify drive script, with a screenshot.
+    validations:
+      required: false
+  - type: textarea
+    id: known
+    attributes:
+      label: Known
+      description: Facts, links, earlier decisions. No file paths, no code, no theory of the cause.
+    validations:
+      required: false

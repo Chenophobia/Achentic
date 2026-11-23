@@ -38,6 +38,7 @@ Deploying on the Mac mini from start to finish: [Deploy on Mac mini.pptx](Deploy
 | [docs/06-which-tool-when.md](docs/06-which-tool-when.md) | pstack vs Pocock, decided |
 | [docs/07-code-standards.md](docs/07-code-standards.md) | Standards, enforcers, CI |
 | [orchestrator/](orchestrator) | The script that runs the loop: one ticket per run, retries, verdict, launchd installer, tests |
+| [intake/](intake) | GitHub issues in, Discord progress out: create work and follow it from anywhere |
 | [sensors/](sensors) | Scripts that watch a deployed app and file tickets. First one: the scheduled live check |
 | [setup/](setup) | `SETUP.md` (the playbook), `doctor.sh`, `new-project.sh`, `status.sh` |
 | [Deploy on Mac mini.pptx](Deploy%20on%20Mac%20mini.pptx) | Six stages from an empty Mac mini to running unattended, with what to check and where the logs are |
@@ -52,7 +53,7 @@ Deploying on the Mac mini from start to finish: [Deploy on Mac mini.pptx](Deploy
 
 ## The loop
 
-1. **Idea** → an issue.
+1. **Idea** → a GitHub issue with the label `agent`, from anywhere. The intake turns it into a ticket.
 2. **Sharpen** (only if the idea is vague) → Pocock interview → spec → tickets. You answer the questions.
 3. **Build** → `claude -p "/pstack:poteto-mode …"` on one ticket.
 4. **Gate** → `npm run gates` on GitHub Actions. A script decides, not an AI.

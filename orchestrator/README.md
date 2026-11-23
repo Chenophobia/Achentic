@@ -68,7 +68,7 @@ Environment variables, all optional.
 | `ACHENTIC_BUILD_MINUTES` | `60` | Builder timeout |
 | `ACHENTIC_VERDICT_MINUTES` | `30` | Verifier timeout |
 | `ACHENTIC_GATES_MINUTES` | `10` | Gates and verify timeout |
-| `ACHENTIC_NTFY_URL` | unset | An ntfy topic URL. Unset means log only |
+| `ACHENTIC_DISCORD_WEBHOOK_URL` | unset | Every step is posted to this Discord channel. Unset means log only. See [intake/README.md](../intake/README.md) |
 | `ACHENTIC_SANDBOX` | unset | `1` runs both agents inside Claude Code's sandbox. See [setup/agent-user](../setup/agent-user/README.md) |
 | `ACHENTIC_HEARTBEAT_URL` | unset | Pinged with the result after every run. See [sensors/uptime-kuma](../sensors/uptime-kuma/README.md) |
 | `ACHENTIC_CLAUDE_BIN` | `claude` | Used by the tests to substitute a fake |

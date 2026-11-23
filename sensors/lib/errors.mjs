@@ -1,6 +1,7 @@
 import { basename } from "node:path";
+import { notify } from "../../orchestrator/lib/notify.mjs";
 import { git } from "../../orchestrator/lib/proc.mjs";
-import { commitTicket, fenced, isJudged, nextId, notify, openMemory, today } from "./tickets.mjs";
+import { commitTicket, fenced, isJudged, nextId, openMemory, today } from "./tickets.mjs";
 
 const FRAMES = 8;
 

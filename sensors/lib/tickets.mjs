@@ -45,13 +45,3 @@ export function isJudged(repo, id) {
 export function fenced(text) {
   return `\`\`\`text\n${text.replaceAll("```", "'''")}\n\`\`\``;
 }
-
-export async function notify(config, state, title, body) {
-  state.log(`sensor ${title}: ${body.split("\n")[0]}`);
-  if (config.ntfyUrl === undefined) return;
-  try {
-    await fetch(config.ntfyUrl, { method: "POST", headers: { Title: title }, body });
-  } catch (error) {
-    state.log(`notify failed: ${error}`);
-  }
-}

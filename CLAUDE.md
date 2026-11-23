@@ -27,6 +27,6 @@ Run `sh setup/status.sh` and summarise it. Log locations are in the last section
 ## Working on this repository itself
 
 - Plain Node 22, no dependencies, `.mjs`. No comments in code under `orchestrator/` and `sensors/`.
-- Tests: `node --test orchestrator/test/*.test.mjs sensors/test/*.test.mjs`. They must pass before a commit.
+- Tests: `node --test orchestrator/test/*.test.mjs sensors/test/*.test.mjs intake/test/*.test.mjs`. They must pass before a commit.
 - A change to the orchestrator or a sensor needs a test that fails without it.
 - Record what was run and what happened in `docs/05-unverified.md`, with what it did not prove.

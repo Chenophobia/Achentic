@@ -1,8 +1,9 @@
 import { createHash } from "node:crypto";
 import { cpSync, existsSync } from "node:fs";
 import { basename, join } from "node:path";
+import { notify } from "../../orchestrator/lib/notify.mjs";
 import { git, run, tail } from "../../orchestrator/lib/proc.mjs";
-import { commitTicket, fenced, isJudged, isQueued, nextId, notify, openMemory, today } from "./tickets.mjs";
+import { commitTicket, fenced, isJudged, isQueued, nextId, openMemory, today } from "./tickets.mjs";
 
 const GATEWAY_ERRORS = new Set([502, 503, 504, 520, 521, 522, 523, 524]);
 const FAILED_LINE = /^\[([\w-]+)\] FAILED: (?:Error: )?(.*)$/m;

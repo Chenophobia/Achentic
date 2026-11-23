@@ -26,11 +26,11 @@ async function main() {
     project: option("--project"),
     token: env.ACHENTIC_GLITCHTIP_TOKEN,
     base: env.ACHENTIC_BASE ?? "main",
-    ntfyUrl: env.ACHENTIC_NTFY_URL,
+    discordUrl: env.ACHENTIC_DISCORD_WEBHOOK_URL,
     minEvents: number("ACHENTIC_ERRORS_MIN_EVENTS", 1),
     dailyCap: number("ACHENTIC_SENSOR_DAILY_CAP", 2),
   };
-  if (Object.values({ ...config, ntfyUrl: "" }).includes(undefined)) throw new Error(USAGE);
+  if (Object.values({ ...config, discordUrl: "" }).includes(undefined)) throw new Error(USAGE);
   config.repo = resolve(config.repo);
   const home = join(env.ACHENTIC_HOME ?? join(homedir(), ".achentic"), basename(config.repo));
   const state = openState(home);

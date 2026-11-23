@@ -25,7 +25,7 @@ function configFor(repo) {
     claudeBin: env.ACHENTIC_CLAUDE_BIN ?? "claude",
     builderModel: env.ACHENTIC_BUILDER_MODEL ?? "sonnet",
     verifierModel: env.ACHENTIC_VERIFIER_MODEL ?? "opus",
-    ntfyUrl: env.ACHENTIC_NTFY_URL,
+    discordUrl: env.ACHENTIC_DISCORD_WEBHOOK_URL,
     sandbox: env.ACHENTIC_SANDBOX === "1",
     dailyCap: number("ACHENTIC_DAILY_CAP", 3),
     buildMaxUsd: number("ACHENTIC_BUILD_MAX_USD", 25),

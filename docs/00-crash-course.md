@@ -29,13 +29,17 @@ You write a ticket. A script hands it to an agent that builds it. Plain scripts 
 | Live check | `sensors/verify-live.mjs` | Hourly: is the live app working for a user? Files a ticket if not | Built, tested locally |
 | Uptime check | `sensors/uptime-kuma/` | Every minute: is it up? Are the jobs still running? Alerts only | Built, setup is yours |
 | Error collection | `sensors/glitchtip/`, `sensors/errors.mjs` | Hourly: any new error in the live app? Files a ticket per error | Built, ran end to end once |
+| Intake + progress | `intake/`, `orchestrator/lib/notify.mjs` | A GitHub issue becomes a ticket; every step is posted to Discord | Built, tested against fakes |
 | CI | `.github/workflows/ci.yml` | Runs the gates on GitHub on every push | Running |
 | Agent user | `setup/agent-user/` | A separate macOS account that owns nothing valuable | Scripts written, not run |
 
 ## 4. What talks to what
 
 ```
- YOU ── write ticket ──► app repo: tickets/ready/NNN-name.md
+ YOU ── GitHub issue (label "agent") from anywhere, or a ticket file
+                               │ intake, every 30 min
+                               ▼
+                        app repo: tickets/ready/NNN-name.md
                                │
                  every 30 min  ▼
                         ORCHESTRATOR (script, no AI)
@@ -53,14 +57,14 @@ You write a ticket. A script hands it to an agent that builds it. Plain scripts 
                  └──── VERIFIER claude -p, Opus, fresh process ◄── uses tokens
                                │ PASS: verdict file committed on the branch
                                ▼
- YOU ◄── phone alert ── branch agent/NNN-name is ready ── you merge, you push
+ YOU ◄── Discord: every step ── branch agent/NNN-name is ready ── you merge, you push
                                │
                                ▼
                         GITHUB ACTIONS runs the gates again     no tokens
 
 
  LIVE APP ◄── every hour ── LIVE CHECK ── broken twice ──► tickets/ready/ (back to the top)
- LIVE APP ◄── every minute ─ UPTIME KUMA ── down ──► phone alert only, never a ticket
+ LIVE APP ◄── every minute ─ UPTIME KUMA ── down ──► Discord alert only, never a ticket
  ORCHESTRATOR and LIVE CHECK ── ping after each run ──► UPTIME KUMA (silence = alert)
 ```
 
@@ -115,7 +119,7 @@ Pocock's skills are never called by the orchestrator. You type them yourself whe
 |---|
 | Orchestrator, branch checks, gates, browser drive |
 | GitHub Actions (free for a public repository) |
-| Live check, Uptime Kuma, heartbeats, phone alerts |
+| Issue intake, live check, Uptime Kuma, heartbeats, Discord posts |
 
 - A simple ticket costs about **$3 to $4 API-equivalent**, a hard one up to $15. On the subscription you are not billed that; it comes out of the weekly limit. How much of the weekly limit is not measured yet.
 - All runs so far, about 26: roughly $47 API-equivalent, $15 of it one ticket.
@@ -139,7 +143,7 @@ Then per ticket:
 
 | Step | Command |
 |---|---|
-| Write a ticket | Copy `tickets/TEMPLATE.md` to `tickets/ready/001-name.md`, fill it in, commit on `main` |
+| Write a ticket | Open a GitHub issue with the "Ticket for the agents" form, or copy `tickets/TEMPLATE.md` to `tickets/ready/001-name.md` and commit on `main` |
 | Run the loop once | `node orchestrator/orchestrator.mjs run --repo ~/work/my-app` |
 | See where things stand | `node orchestrator/orchestrator.mjs status --repo ~/work/my-app` |
 | Read the verdict | `docs/verdicts/verdict-001-name.md` on branch `agent/001-name` |
@@ -167,7 +171,7 @@ Full steps: [setup/agent-user/README.md](../setup/agent-user/README.md), [sensor
 | 5 | Schedule the orchestrator, every 30 minutes | `sudo sh setup/agent-user/install-daemon.sh agent orchestrator /Users/agent/work/my-app` |
 | 6 | Schedule the live check, every hour | `sudo sh setup/agent-user/install-daemon.sh agent sensor /Users/agent/work/my-app https://my-app.example.com` |
 | 7 | Start the uptime check, then set it up in its web page | `docker compose -f sensors/uptime-kuma/compose.yml up -d` |
-| 8 | Phone alerts: pick an ntfy topic, add `ACHENTIC_NTFY_URL` to `~/.achentic/env` | |
+| 8 | Issues in, progress out: create a Discord webhook, add `ACHENTIC_DISCORD_WEBHOOK_URL` and `ACHENTIC_GITHUB_REPO` to `~/.achentic/env` | [intake/README.md](../intake/README.md) |
 | 9 | On GitHub: protect `main`, require the `gates` check | |
 
 Steps 5 and 6 each print the command that starts the job. Nothing starts by itself.
@@ -216,7 +220,7 @@ One cost: Chrome cannot start inside the sandbox. The orchestrator runs the brow
 | The agent user | Needs `sudo` on the Mac mini |
 | A real app: database, login, dependencies | Only a 100-line notes app so far |
 | Share of the weekly limit per ticket | Unmeasured |
-| Uptime Kuma monitors, phone alerts | Need your accounts |
+| Uptime Kuma monitors, a real Discord channel, a real issue through intake | Need your accounts |
 | A real verifier FAIL sent back through the orchestrator | Only with a fake agent |
 
 Every run and its numbers: [05-unverified.md](05-unverified.md).

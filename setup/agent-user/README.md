@@ -70,7 +70,7 @@ One real ticket has been through this (note count in the heading, a browser-only
    claude setup-token
    ```
 
-   Then add one line to `~/.achentic/env`: `CLAUDE_CODE_OAUTH_TOKEN=` followed by the token. Optional lines in the same file: `ACHENTIC_NTFY_URL`, `ACHENTIC_HEARTBEAT_URL`, `ACHENTIC_SENSOR_HEARTBEAT_URL`, `ACHENTIC_DAILY_CAP`.
+   Then add one line to `~/.achentic/env`: `CLAUDE_CODE_OAUTH_TOKEN=` followed by the token. Optional lines in the same file: `ACHENTIC_DISCORD_WEBHOOK_URL`, `ACHENTIC_GITHUB_REPO`, `ACHENTIC_HEARTBEAT_URL`, `ACHENTIC_SENSOR_HEARTBEAT_URL`, `ACHENTIC_DAILY_CAP`.
 
 5. Run one ticket by hand as that user before scheduling anything.
 

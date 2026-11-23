@@ -113,6 +113,28 @@ test("each agent run carries its own spending cap, and going over it blocks the 
   assert.match(over.state.tickets["001-thing"].reason, /error_max_budget_usd/);
 });
 
+test("every step of a ticket is announced, in order", async () => {
+  const fix = { remove: ["bad"], commit: true };
+  const { config, state } = setup([{ write: { bad: "x" }, commit: true }, fix, PASS]);
+  const said = [];
+  await runOnce(config, { ...state, log: (line) => said.push(line.replace(/^app 001-thing: /, "")) });
+  assert.deepEqual(
+    said.map((line) => line.split(": ")[0].replace(/ · /g, " | ")),
+    [
+      "started",
+      "attempt 1 | building",
+      "attempt 1 | branch checks passed",
+      "attempt 1 | gates failed, sent back to the builder",
+      "attempt 2 | building",
+      "attempt 2 | branch checks passed",
+      "attempt 2 | gates passed",
+      "attempt 2 | browser drive passed",
+      "attempt 2 | verdict PASS",
+      "ready to merge (PASS)",
+    ],
+  );
+});
+
 test("gate failure goes back to the same builder session with the output", async () => {
   const fix = { remove: ["bad"], commit: true };
   const { config, state, calls } = setup([{ write: { bad: "x" }, commit: true }, fix, { result: "ok\nVERDICT: PASS+NOTES" }]);
