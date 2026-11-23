@@ -56,16 +56,31 @@ function assertHome(repo) {
   assert.equal(git(repo, "status", "--porcelain"), "");
 }
 
-test("passing change ends in review with ticket closed on the branch", async () => {
+test("passing change ends in review with the verdict recorded on the branch", async () => {
   const { repo, config, state } = setup([GOOD, PASS]);
   assert.equal(await runOnce(config, state), "review");
   assertHome(repo);
   assert.equal(state.tickets["001-thing"].verdict, "PASS");
   const files = git(repo, "ls-tree", "-r", "--name-only", "agent/001-thing");
-  assert.match(files, /tickets\/done\/001-thing\.md/);
+  assert.match(files, /tickets\/ready\/001-thing\.md/);
   assert.match(files, /docs\/verdicts\/verdict-001-thing\.md/);
-  assert.ok(existsSync(join(repo, "tickets/ready/001-thing.md")));
   assert.equal(await runOnce(config, state), "idle");
+});
+
+test("two open tickets merge without conflict and stay done without the state file", async () => {
+  const other = { write: { "other.txt": "y" }, commit: true };
+  const { repo, config, state } = setup([GOOD, PASS, other, PASS]);
+  assert.equal(await runOnce(config, state), "review");
+  writeFileSync(join(repo, "tickets/ready/002-other.md"), "# Other\n");
+  git(repo, "add", "-A");
+  git(repo, "commit", "-q", "-m", "second ticket");
+  assert.equal(await runOnce(config, state), "review");
+  git(repo, "merge", "-q", "--no-ff", "-m", "merge 1", "agent/001-thing");
+  git(repo, "merge", "-q", "--no-ff", "-m", "merge 2", "agent/002-other");
+  assertHome(repo);
+  assert.ok(existsSync(join(repo, "feature.txt")) && existsSync(join(repo, "other.txt")));
+  const fresh = openState(join(dirname(repo), "fresh-state"));
+  assert.equal(await runOnce(config, fresh), "idle");
 });
 
 test("gate failure goes back to the same builder session with the output", async () => {

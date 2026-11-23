@@ -34,7 +34,7 @@ To queue work, commit a ticket to `tickets/ready/` on the base branch. The lowes
 5. Checks the branch: there is a commit, the tree is clean, no protected file changed.
 6. Runs the gates, then `tools/verify/drive.mjs all` if the app has it.
 7. Runs the verifier in a new process with a different model. It cannot edit; if the repository changed while it ran, the verdict is void.
-8. On PASS or PASS+NOTES: moves the ticket to `tickets/done/`, saves the verdict to `docs/verdicts/`, commits both on the branch, marks the ticket `review`.
+8. On PASS or PASS+NOTES: saves the verdict to `docs/verdicts/verdict-<ticket-id>.md`, commits it on the branch, marks the ticket `review`. The ticket file is not moved; once the branch is merged, the verdict file on the base branch is what keeps the ticket out of the queue.
 9. On a failed check, gate, verify or verdict: resumes the builder's session with the finding and tries again, three attempts in total.
 10. Returns to the base branch, stashing anything left behind, and notifies.
 
@@ -94,7 +94,7 @@ Before starting it: `claude auth status` shows the personal Max account, and `no
 node --test orchestrator/test/orchestrator.test.mjs
 ```
 
-Seven tests drive the whole pipeline against a throwaway git repository with a fake agent: pass, gate failure and retry, three failed verdicts, protected file, edited scripts, dirty tree, meddling verifier, agent error, daily cap, held and stale lock.
+Eight tests drive the whole pipeline against a throwaway git repository with a fake agent: pass, gate failure and retry, three failed verdicts, protected file, edited scripts, dirty tree, meddling verifier, agent error, daily cap, held and stale lock, and two open tickets merged without conflict.
 
 ## Not done
 

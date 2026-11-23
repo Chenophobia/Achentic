@@ -121,14 +121,16 @@ async function work(config, state, job) {
   return { kind: "block", attempts: config.maxAttempts, message: `Still failing after ${config.maxAttempts} attempts. Last finding:\n${feedback}` };
 }
 
+function verdictFile(id) {
+  return `docs/verdicts/verdict-${id}.md`;
+}
+
 function close(config, job, result) {
   const { repo } = config;
-  mkdirSync(join(repo, "tickets/done"), { recursive: true });
   mkdirSync(join(repo, "docs/verdicts"), { recursive: true });
-  git(repo, "mv", job.ticket, `tickets/done/${job.id}.md`);
-  writeFileSync(join(repo, `docs/verdicts/verdict-${job.id}.md`), `${result.text.trimEnd()}\n`);
-  git(repo, "add", "docs/verdicts", "tickets");
-  git(repo, "commit", "-m", `Close ticket ${job.id}: verdict ${result.verdict}`);
+  writeFileSync(join(repo, verdictFile(job.id)), `${result.text.trimEnd()}\n`);
+  git(repo, "add", verdictFile(job.id));
+  git(repo, "commit", "-m", `Record verdict for ticket ${job.id}: ${result.verdict}`);
 }
 
 function leaveBranch(config, id) {
@@ -155,7 +157,8 @@ export function queue(config, state) {
     .filter((name) => /^\d+.*\.md$/.test(name))
     .sort()
     .map((name) => basename(name, ".md"))
-    .filter((id) => state.tickets[id] === undefined);
+    .filter((id) => state.tickets[id] === undefined)
+    .filter((id) => !existsSync(join(config.repo, verdictFile(id))));
 }
 
 function preflight(config, state) {
