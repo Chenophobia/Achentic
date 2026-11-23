@@ -8,7 +8,7 @@ A personal agentic development cycle: describe an idea, agents build it, scripts
 
 ## Start here
 
-1. [docs/00-crash-course.md](docs/00-crash-course.md) — 20 minutes: vocabulary, who does what, why each piece was chosen, what is proven, what 24/7 needs.
+1. [docs/00-crash-course.md](docs/00-crash-course.md) — 15 minutes: the parts, what talks to what, how agents are called, what uses tokens, how to run it by hand and 24/7.
 2. [Agentic dev cycle.pptx](Agentic%20dev%20cycle.pptx) — 12 slides, same story in pictures.
 3. [docs/06-which-tool-when.md](docs/06-which-tool-when.md) — pstack or Pocock: the fixed rule.
 4. [docs/07-code-standards.md](docs/07-code-standards.md) — every standard and the script that enforces it.

@@ -1,146 +1,242 @@
 # Crash course
 
-Twenty minutes. Read top to bottom once; after that the other docs make sense.
+Fifteen minutes. What the system is, how the parts talk, what costs tokens, how to run it.
 
-## 1. The idea in one paragraph
+## 1. The idea
 
-You describe what you want. One agent turns that into small tickets. Another agent builds one ticket at a time. Plain scripts (tests, lint) decide whether the code is acceptable. A third agent, which did not write the code, runs the real app and tries to break it. You read its verdict and press merge. Everything except "describe" and "merge" is automated.
+You write a ticket. A script hands it to an agent that builds it. Plain scripts check the code. A second agent, which did not write it, tries to break it. You read the verdict and merge. Sensors watch the live app and write tickets themselves when something breaks.
 
-## 2. Vocabulary
+## 2. Words
 
-| Term | Meaning |
+| Word | Meaning |
 |---|---|
-| Claude Code | The agent program. Runs in the app, or in a terminal as `claude` |
-| Headless | `claude -p "prompt"`: runs without a chat window, prints a result, exits. This is what a scheduler calls |
-| Skill | A markdown file of instructions an agent loads for a kind of task. Invoked as `/name` |
-| Plugin | A bundle of skills. We use two: **pstack** and **mattpocock-skills** |
-| Playbook | pstack's step list for one kind of work: Feature, Bug fix, Refactoring |
-| Ticket | One small, complete piece of work, written as goal + pass/fail done-check + proof wanted |
-| Gates | A script whose exit code says pass or fail. No AI involved. `scripts/gates.sh` |
-| Verify skill | A project-specific skill plus helper scripts that start the app, drive it in a real browser, and save screenshots |
+| Headless | `claude -p "prompt"`: Claude Code with no chat window. Runs, prints a result, exits. This is how every agent here is called |
+| pstack | Lauren Tan's plugin. The engine. `/pstack:poteto-mode` picks a playbook: Feature, Bug fix or Refactoring |
+| Ticket | A markdown file: goal, a done-check that can pass or fail, proof wanted |
+| Gates | `scripts/gates.sh`. Six checks, exit code decides. No AI |
+| Browser drive | `tools/verify/drive.mjs`. Starts the app, clicks through it in headless Chrome, saves screenshots |
 | Verdict | `PASS`, `PASS+NOTES` or `FAIL` from an agent that did not write the change |
-| Worktree | A second checkout of the same repo, so two jobs do not trip over each other |
-| Quota | Your Max plan's rolling 5-hour and weekly limits. Every headless run draws from it |
+| Orchestrator | The script that runs the loop. Not an AI |
+| Sensor | A script that watches the live app |
 
-## 3. Who does what
+## 3. The parts
 
-| Role | Who | Tool |
-|---|---|---|
-| Decide what to build | You | An issue, a sentence |
-| Sharpen it into tickets | Agent + your answers | Pocock: `/grill-with-docs` → `/to-spec` → `/to-tickets` |
-| Build one ticket | Agent | pstack: `/pstack:poteto-mode` picks the playbook |
-| Decide if code is acceptable | Script, run by GitHub Actions | `scripts/gates.sh` |
-| Prove it works on the running app | Agent, not the author | `verify-<app>` skill, then a verdict |
-| Accept the change | You | Merge |
-
-## 4. How the stack was chosen
-
-Each choice traces to a constraint you gave or something the research found. Full reasoning and sources are in the [research report](../reports/Agentic%20dev%20cycle%20pstack%20Pocock.md).
-
-| Choice | Why |
-|---|---|
-| pstack as the engine | You named Lauren Tan's method as the main driver. It is the piece that keeps code clean: evidence-only review, bug repro before theory, subtract-first refactors, non-author verdicts |
-| Pocock's skills for the front end | pstack deliberately has no interview and no ticket queue. An "only prompt ideas" workflow needs both |
-| Tickets kept, even though pstack rejects specs | You need a durable queue you can see from a phone. Each ticket is written the pstack way (goal + done-check), so the two fit |
-| pstack for all code work; Pocock at five named points only | You asked for pstack as the main engine. Fixed rule in [06-which-tool-when.md](06-which-tool-when.md) |
-| GitHub Actions runs the gates | You asked for CI there. Deterministic only, so it costs no quota |
-| TypeScript strict, no comments, no dead code, no duplication as gates | pstack advises these but enforces none; scripts do. See [07-code-standards.md](07-code-standards.md) |
-| Deterministic gates as the real merge check | Both authors rank scripts above prompts. pstack ships no dead-code or duplication sweep, so gates fill that hole |
-| Non-author verdict | pstack's rule: "an author checks what it meant to build." Today it found two crashes the author missed |
-| One agent at a time | Max $100 quota is one shared pool; parallel runs drain it proportionally. Also pstack's single-owner rule |
-| Sonnet builds, Opus judges | Building is the high-volume work; judging benefits from a different, stronger model |
-| $20 API for small capped jobs | A second tank with a hard dollar limit that still works when the subscription is locked out |
-| Mac mini + launchd + Docker Compose + one Cloudflare tunnel | What you already run. No new paid services |
-| Separate macOS user and sandbox for the agent | The same machine hosts production and tunnel credentials |
-
-## 5. What has actually been tested
-
-All on a 170-line throwaway app, [examples/tiny-notes](../examples/tiny-notes), launched by hand. Details: [05-unverified.md](05-unverified.md).
-
-| Works | Evidence |
-|---|---|
-| Both plugins install and load headless | Installed; 11 headless runs |
-| Idea → grill → spec → 5 tickets | `examples/tiny-notes/.scratch/tags/` |
-| Feature, Bug fix, Refactoring playbooks | Tickets in `examples/tiny-notes/tickets/`; run log in [05-unverified.md](05-unverified.md) |
-| Agent drives a real browser | `tools/verify/`, screenshots in `.verify-evidence/` |
-| Non-author verdict finds real bugs | `examples/tiny-notes/docs/verdicts/` |
-| Verdict → ticket → fix → re-verdict | Ticket 005 |
-
-| Not tested or not built | |
-|---|---|
-| A real app (database, auth, dependencies) | Unknown how it scales |
-| Running unattended | The orchestrator ran one ticket end to end, started by hand. Not scheduled yet |
-| Quota per ticket | Never measured against the weekly limit |
-| Phone intake, preview, deploy, rollback | Not built |
-| Sandbox user, process cleanup | Not built; early runs left orphan servers |
-
-## 6. Running 24/7 and catching bugs: what that takes
-
-"Runs 24/7" and "catches bugs whenever" are two different systems. Only part of the first exists.
-
-**A. Building around the clock (script built in `orchestrator/`, not scheduled)**
-
-1. A poller on the Mac mini, started by launchd every 15–30 minutes, that picks one ready ticket and runs the build.
-2. A wrapper that caps runs per day, logs cost, and kills leftover processes.
-3. A CI runner that runs gates, the verify skill and the verdict on every branch.
-4. You merge from your phone.
-
-**B. Catching bugs in what is already live (first sensor built in `sensors/`, not scheduled)**
-
-Today's loop only catches bugs in a change before it merges. Catching failures in production needs sensors that turn a failure into a ticket:
-
-| Sensor | Catches | Feeds the loop by |
-|---|---|---|
-| Uptime check hitting each app every minute | App down, tunnel down | Opening a ticket, pinging your phone |
-| Scheduled verify-skill run against production (read-only features) | A feature that silently stopped working | Opening a ticket with screenshots |
-| Error log watcher (app logs, container restarts) | Crashes, exceptions | A cheap API-budget job that groups errors and opens one ticket per new kind |
-| Nightly dependency audit | Known vulnerabilities | Opening a ticket |
-| Twice-weekly architecture survey | Slow rot | Filing refactor candidates for you to pick |
-
-Each sensor only opens a ticket. The same build → gates → verdict → merge path handles it from there. That keeps one pipeline, and keeps you as the merge gate.
-
-Rule from both authors: add one automated trigger at a time, with a brake on each. Triggers without brakes are how you get a "slop cannon".
-
-## 7. What to read, in order
-
-| # | File | Time | Why |
+| Part | Where | What it does | State |
 |---|---|---|---|
-| 1 | This file | 20 min | The map |
-| 2 | [Deck](../Agentic%20dev%20cycle.pptx) | 10 min | Same story in pictures |
-| 3 | [01-workflow.md](01-workflow.md) | 10 min | The eleven phases and three gates |
-| 4 | [02-clean-code-rules.md](02-clean-code-rules.md) | 10 min | How Lauren keeps code clean; the heart of it |
-| 5 | [06-which-tool-when.md](06-which-tool-when.md) | 5 min | pstack or Pocock: the fixed rule |
-| 5b | [07-code-standards.md](07-code-standards.md) | 5 min | Every standard and the script that enforces it |
-| 5c | [05-unverified.md](05-unverified.md), from "Install test" down | 15 min | What happened when it was actually run |
-| 6 | [04-budget-and-infra.md](04-budget-and-infra.md) | 10 min | Quota, models, Mac mini layout, guardrails |
-| 7 | [03-setup-runbook.md](03-setup-runbook.md) | 10 min | Commands and rollout stages, when you start building |
-| 8 | [Research report](../reports/Agentic%20dev%20cycle%20pstack%20Pocock.md) | 30 min | Sources and the reasoning behind every choice |
+| Template | `template/` | Start of every app: TypeScript strict, six gates, CI file, agent rules | Proven |
+| Orchestrator | `orchestrator/` | Takes one ticket through build, checks, verdict | Proven on 3 real tickets |
+| Sandbox mode | `ACHENTIC_SANDBOX=1` | Confines every command the agents run | Proven |
+| Live check | `sensors/verify-live.mjs` | Hourly: is the live app working for a user? Files a ticket if not | Built, tested locally |
+| Uptime check | `sensors/uptime-kuma/` | Every minute: is it up? Are the jobs still running? Alerts only | Built, setup is yours |
+| CI | `.github/workflows/ci.yml` | Runs the gates on GitHub on every push | Running |
+| Agent user | `setup/agent-user/` | A separate macOS account that owns nothing valuable | Scripts written, not run |
 
-Then look at the example app: read `examples/tiny-notes/tickets/005-single-request-crashes.md`, the fix in `server.js`, and `docs/verdicts/verdict-005.md`. That is one full turn of the loop in three files.
+## 4. What talks to what
 
-Primary sources, if you want the authors in their own words:
+```
+ YOU ── write ticket ──► app repo: tickets/ready/NNN-name.md
+                               │
+                 every 30 min  ▼
+                        ORCHESTRATOR (script, no AI)
+                               │ creates branch agent/NNN-name
+                               ▼
+                 ┌──► BUILDER   claude -p, Sonnet, pstack      ◄── uses tokens
+                 │             │ commits on the branch
+                 │             ▼
+   finding goes  │      branch checks  (commit? clean? gate files untouched?)
+   back, up to   │             ▼
+   3 attempts    ├──── GATES    sh scripts/gates.sh            no tokens
+                 │             ▼
+                 ├──── BROWSER DRIVE  node tools/verify/drive.mjs all   no tokens
+                 │             ▼
+                 └──── VERIFIER claude -p, Opus, fresh process ◄── uses tokens
+                               │ PASS: verdict file committed on the branch
+                               ▼
+ YOU ◄── phone alert ── branch agent/NNN-name is ready ── you merge, you push
+                               │
+                               ▼
+                        GITHUB ACTIONS runs the gates again     no tokens
 
-- pstack guide: `~/.claude/plugins/cache/cursor-plugins/pstack/0.15.46/docs/guide/` (ten short chapters, already on this Mac)
-- Pocock: the README at `github.com/mattpocock/skills` and `/mattpocock-skills:ask-matt` inside Claude Code
 
-## 8. Try it yourself in five minutes
-
-In a terminal:
-
-```bash
-cd examples/tiny-notes
+ LIVE APP ◄── every hour ── LIVE CHECK ── broken twice ──► tickets/ready/ (back to the top)
+ LIVE APP ◄── every minute ─ UPTIME KUMA ── down ──► phone alert only, never a ticket
+ ORCHESTRATOR and LIVE CHECK ── ping after each run ──► UPTIME KUMA (silence = alert)
 ```
 
-```bash
-npm run gates
+Three rules hold it together:
+
+- The orchestrator talks to agents only by starting `claude -p` and reading what it prints. Agents never talk to each other.
+- State lives in files: tickets in the repo, verdicts in `docs/verdicts/`, everything else in `~/.achentic/<app>/`.
+- Nothing pushes, merges or deploys except you.
+
+## 5. How an agent is called
+
+One command per agent. The orchestrator builds it; you never type it.
+
+```sh
+claude -p "/pstack:poteto-mode Implement the ticket in tickets/ready/004-note-count.md. …" \
+  --model sonnet \
+  --permission-mode acceptEdits \
+  --allowedTools "Bash(node *)" "Bash(npm *)" "Bash(git *)" … \
+  --settings ~/.achentic/<app>/agent-settings.json \
+  --add-dir ~/.claude/plugins/cache/cursor-plugins/pstack \
+  --output-format json
 ```
 
-```bash
-node tools/verify/drive.mjs all
+| Piece | Why |
+|---|---|
+| `-p "…"` | Headless. The prompt starts with `/pstack:poteto-mode`, which loads pstack and picks the playbook |
+| `--model` | `sonnet` builds, `opus` judges |
+| `--permission-mode` | Builder may edit files. Verifier may not |
+| `--allowedTools` | The only shell commands allowed without asking. Nobody is there to ask |
+| `--settings` | The sandbox rules (only in sandbox mode) |
+| `--add-dir` | Lets pstack read its own playbooks |
+| `--output-format json` | The orchestrator reads result, cost and session id from it |
+
+| | Builder | Verifier |
+|---|---|---|
+| Model | Sonnet | Opus |
+| Process | One session; a retry resumes it with `--resume` | Always new, knows nothing of the builder's reasoning |
+| May edit | Yes, inside the repo | No. If the repo changed while it ran, the verdict is void |
+| Ends with | A report | One line: `VERDICT: PASS`, `PASS+NOTES` or `FAIL` |
+
+Pocock's skills are never called by the orchestrator. You type them yourself when an idea is too vague for a ticket: `/mattpocock-skills:grill-with-docs`, then `to-spec`, then `to-tickets`.
+
+## 6. What uses tokens
+
+| Uses your Claude Max quota | Per ticket, measured |
+|---|---|
+| Builder (Sonnet) | $1.00 to $2.50 API-equivalent, 1 to 5 minutes |
+| Verifier (Opus) | $1.20 to $1.70, 1 to 2 minutes |
+| A retry | About $1 more |
+
+| Uses no tokens |
+|---|
+| Orchestrator, branch checks, gates, browser drive |
+| GitHub Actions (free for a public repository) |
+| Live check, Uptime Kuma, heartbeats, phone alerts |
+
+- One ticket costs about **$3 to $4 API-equivalent**. On the subscription you are not billed that; it comes out of the weekly limit. How much of the weekly limit is not measured yet.
+- All test runs so far, about 24: roughly $31 API-equivalent.
+- The $20 API budget is used by nothing that is built. The run wrapper removes `ANTHROPIC_API_KEY` so a run cannot fall back to paid use.
+- Brakes: 3 tickets a day, 3 attempts a ticket, one ticket at a time, 2 sensor tickets a day.
+
+## 7. Run it by hand
+
+Once per app:
+
+```sh
+cp -R template/ ~/work/my-app && cd ~/work/my-app && git init -b main
+claude plugin install pstack@cursor-plugins --scope project
+claude plugin install mattpocock-skills@claude-plugins-official --scope project
+npm ci && npm run gates
 ```
 
-```bash
-open .verify-evidence
+Then per ticket:
+
+| Step | Command |
+|---|---|
+| Write a ticket | Copy `tickets/TEMPLATE.md` to `tickets/ready/001-name.md`, fill it in, commit on `main` |
+| Run the loop once | `node orchestrator/orchestrator.mjs run --repo ~/work/my-app` |
+| See where things stand | `node orchestrator/orchestrator.mjs status --repo ~/work/my-app` |
+| Read the verdict | `docs/verdicts/verdict-001-name.md` on branch `agent/001-name` |
+| Accept | `git merge agent/001-name`, then push |
+| Try a blocked ticket again | `node orchestrator/orchestrator.mjs retry 001-name --repo ~/work/my-app` |
+
+Add `ACHENTIC_SANDBOX=1` in front of the run command to confine the agents.
+
+Try it now on the example, no tokens needed:
+
+```sh
+cd examples/tiny-notes-ts && npm ci && npm run gates && node tools/verify/drive.mjs all && open .verify-evidence
 ```
 
-The first shows the deterministic gate. The second starts the app, drives it in headless Chrome and saves screenshots. The third opens the evidence.
+## 8. Run it 24/7 on the Mac mini
+
+Full steps: [setup/agent-user/README.md](../setup/agent-user/README.md), [sensors/README.md](../sensors/README.md), [sensors/uptime-kuma/README.md](../sensors/uptime-kuma/README.md).
+
+| # | Step | Command |
+|---|---|---|
+| 1 | Create the agent user | `sudo sh setup/agent-user/create-user.sh agent` |
+| 2 | As that user: install Node and Claude Code, clone Achentic and the app into `~/work` | `sudo -u agent -i` |
+| 3 | As that user: make a long-lived login token, put it in `~/.achentic/env` yourself | `claude setup-token` |
+| 4 | As that user: one ticket by hand | `sh setup/agent-user/run-as-agent.sh orchestrator ~/work/my-app` |
+| 5 | Schedule the orchestrator, every 30 minutes | `sudo sh setup/agent-user/install-daemon.sh agent orchestrator /Users/agent/work/my-app` |
+| 6 | Schedule the live check, every hour | `sudo sh setup/agent-user/install-daemon.sh agent sensor /Users/agent/work/my-app https://my-app.example.com` |
+| 7 | Start the uptime check, then set it up in its web page | `docker compose -f sensors/uptime-kuma/compose.yml up -d` |
+| 8 | Phone alerts: pick an ntfy topic, add `ACHENTIC_NTFY_URL` to `~/.achentic/env` | |
+| 9 | On GitHub: protect `main`, require the `gates` check | |
+
+Steps 5 and 6 each print the command that starts the job. Nothing starts by itself.
+
+Not using a separate user yet? `sh orchestrator/install-launchd.sh <app>` and `sh sensors/install-launchd.sh <app> <url>` schedule the same jobs under your own account.
+
+## 9. What keeps it safe
+
+| Guard | Stops |
+|---|---|
+| Sandbox | Agent commands writing outside the repo, reading `~/.ssh` or the keychain, reaching the internet (only npm and localhost allowed), pushing to GitHub |
+| Separate user | Everything else, including agent-written tests the gates run: that user has no keys and no admin rights |
+| Protected files | A change to gate scripts, `.github/`, `.claude/`, `CLAUDE.md` or `package.json` scripts blocks the ticket at once |
+| Verifier cannot edit | A verdict from a verifier that touched the repo is thrown away |
+| No push rights | The agent user has no GitHub credentials. You fetch its branches and push |
+| Caps | Tickets per day, attempts per ticket, one run at a time |
+
+One cost: Chrome cannot start inside the sandbox. The orchestrator runs the browser drive outside it and saves the output for the agents to read.
+
+## 10. What catches bugs
+
+| When | What | How |
+|---|---|---|
+| Before merge | Six gates | Types, lint, no comments, dead code, duplication, tests |
+| Before merge | Browser drive | Real clicks in a real browser |
+| Before merge | Verifier | Tries inputs the author did not |
+| After merge | GitHub Actions | Same gates, clean machine |
+| Live | Uptime check | Down or unreachable: alert |
+| Live | Live check | Up but broken: ticket, back into the loop |
+| Live | Error collection (GlitchTip) | Not built. For a real deployed app |
+
+## 11. Proven and not
+
+| Proven | |
+|---|---|
+| Agent builds strict TypeScript under the gates without touching them | Ticket 001 |
+| Orchestrator, queue to mergeable branch, no hand steps | Tickets 002, 003, 004 |
+| Retry: a failure goes back to the same session and gets fixed | Ticket 003 |
+| Sandbox blocks escapes, loop still works inside it | Ticket 004 |
+| Verifier finds bugs the author missed | Two crashes in the first example |
+| Live check: healthy, broken, stopped | Local copies of the app |
+
+| Not yet | |
+|---|---|
+| Anything scheduled | Installers written, none loaded |
+| The agent user | Needs `sudo` on the Mac mini |
+| A real app: database, login, dependencies | Only a 100-line notes app so far |
+| Share of the weekly limit per ticket | Unmeasured |
+| Uptime Kuma monitors, phone alerts | Need your accounts |
+| A real verifier FAIL sent back through the orchestrator | Only with a fake agent |
+
+Every run and its numbers: [05-unverified.md](05-unverified.md).
+
+## 12. Why these choices
+
+| Choice | Reason |
+|---|---|
+| pstack runs all code work | You chose it as the engine. Pocock's skills only for turning a vague idea into tickets, triage, and architecture reports. Rule: [06-which-tool-when.md](06-which-tool-when.md) |
+| Scripts enforce the standards | pstack advises, it does not enforce. Each rule has a gate proven to fail on a bad change: [07-code-standards.md](07-code-standards.md) |
+| The manager is a script | An AI manager spends tokens to decide what a loop can decide. Tokens go only to building and judging |
+| Sonnet builds, Opus judges | Building is the volume. Judging gains from a different, stronger model |
+| One ticket at a time | One shared weekly quota |
+| GitHub Actions for gates only | Free and cannot be argued with. AI steps stay at home on the subscription |
+| Outages alert, bugs become tickets | An agent editing code cannot fix a dead tunnel |
+
+## 13. Read next
+
+| File | For |
+|---|---|
+| [Deck](../Agentic%20dev%20cycle.pptx) | This page in pictures |
+| [orchestrator/README.md](../orchestrator/README.md) | Every setting and what blocks a ticket |
+| [setup/agent-user/README.md](../setup/agent-user/README.md) | Sandbox measurements and Mac mini steps |
+| [02-clean-code-rules.md](02-clean-code-rules.md) | How pstack keeps code clean |
+| [05-unverified.md](05-unverified.md) | The log of every test run |
+| [Research report](../reports/Agentic%20dev%20cycle%20pstack%20Pocock.md) | Sources |
