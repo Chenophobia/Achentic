@@ -120,8 +120,7 @@ async function runDarkMode({ cdp, log, appPort }) {
   if (stored !== toggled) throw new Error(`localStorage theme "${stored}" does not match applied theme "${toggled}"`);
   await log(`verified localStorage persisted "${stored}"`);
 
-  await cdp.send("Page.navigate", { url: `http://localhost:${appPort}/` });
-  await cdp.waitForEvent("Page.loadEventFired", 10000);
+  await cdp.navigate(`http://localhost:${appPort}/`);
   const afterReload = await cdp.evalExpr(`document.documentElement.dataset.theme`);
   if (afterReload !== toggled) {
     throw new Error(`theme reverted on reload: expected "${toggled}", got "${afterReload}"`);
@@ -218,8 +217,7 @@ async function runBrowserFeature(name) {
     await cdp.connect();
     await cdp.send("Page.enable");
     await cdp.send("Runtime.enable");
-    await cdp.send("Page.navigate", { url: `http://localhost:${appPort}/` });
-    await cdp.waitForEvent("Page.loadEventFired", 10000);
+    await cdp.navigate(`http://localhost:${appPort}/`);
     await log("page loaded");
 
     if (name === "add-delete") await runAddDelete({ cdp, log, appPort });

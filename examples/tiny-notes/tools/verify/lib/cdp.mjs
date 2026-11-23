@@ -76,6 +76,12 @@ export class CdpSession {
     });
   }
 
+  async navigate(url, timeoutMs = 10000) {
+    const loaded = this.waitForEvent("Page.loadEventFired", timeoutMs);
+    await this.send("Page.navigate", { url });
+    await loaded;
+  }
+
   waitForEvent(method, timeoutMs = 10000) {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {

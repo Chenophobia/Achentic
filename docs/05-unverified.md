@@ -261,6 +261,8 @@ Merge of both branches, 2026-11-23, by hand: code merged without conflict. One c
 
 Fixed the same day: the orchestrator no longer moves ticket files. It commits only the verdict file on the branch, and a ticket counts as done when its verdict file is on the base branch. A new pipeline test reproduces the conflict on the old code and passes on the new (8 tests). Tickets 002 and 003 in the example sit in `tickets/done/` because they ran before this change.
 
+First CI flake, 2026-11-23: on the push of that fix, the browser drive of `examples/tiny-notes` failed on GitHub although none of its files had changed and it had passed four runs before and six local reruns after. The job log was not readable without a GitHub login, so the cause is unconfirmed. One real race was found and removed: the drivers sent `Page.navigate` and only then started listening for the load event. Both examples now register the listener first.
+
 Also untested: the GitHub-issues poller sketch and gate script in [03-setup-runbook.md](03-setup-runbook.md). The CLI flags in them (`--permission-mode auto`, `--permission-prompts none`, `--max-turns`, `--bare`, `--max-budget-usd`) come from the docs as reported by researchers; confirm against `claude --help` on your install.
 
 The reconciliation of pstack with Pocock's skills is this project's own judgment. Neither author mentions the other.
