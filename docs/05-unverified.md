@@ -241,6 +241,22 @@ The builder's own `num_turns` and `duration_ms` (8 turns, 46 s) did not match th
 
 Running total: sixteen headless runs ≈ $25 API-equivalent.
 
+## Orchestrator retry path with a real agent — 2026-11-23
+
+Ticket 003 (health endpoint), same sandbox. The failure was forced: the orchestrator ran with an extra gate the builder was not told about (`CHANGELOG.md` must have a line for the ticket), so the builder's own gates passed and the orchestrator's did not.
+
+| Step | Result |
+|---|---|
+| Attempt 1, builder (Sonnet) | 1 min 44 s, $1.03. Endpoint, test, drive check, one commit. Branch checks ok |
+| Orchestrator gates | Failed on the changelog rule. Output sent to the same session with `--resume` |
+| Attempt 2, same session | 1 min 14 s, $1.04. Added `CHANGELOG.md` with the entry, second commit. Checks, gates, browser verify ok |
+| Verifier (Opus) | 1 min 7 s, $1.17. `PASS` |
+| End state | `review` after 2 attempts, 4 min 15 s wall. Repo back on `main`, clean, no process left |
+
+Settles: a resumed real session understands the orchestrator's finding and fixes it. Does not settle: a retry caused by a verifier FAIL on a real agent, or a failure the agent cannot fix (the three-attempt stop has only run against the fake agent).
+
+Running total: nineteen headless runs ≈ $28 API-equivalent.
+
 Also untested: the GitHub-issues poller sketch and gate script in [03-setup-runbook.md](03-setup-runbook.md). The CLI flags in them (`--permission-mode auto`, `--permission-prompts none`, `--max-turns`, `--bare`, `--max-budget-usd`) come from the docs as reported by researchers; confirm against `claude --help` on your install.
 
 The reconciliation of pstack with Pocock's skills is this project's own judgment. Neither author mentions the other.

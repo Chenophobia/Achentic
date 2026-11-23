@@ -55,13 +55,13 @@ TypeScript strict · no `any` · no comments · no unused code · no duplication
 - A non-author verdict that found two crashes the author missed, then a fix and a clean re-verdict.
 - Template gates: six out of six fail on the bad change they exist to catch.
 - An agent building under those gates: strict types, no `any`, no comments, and a complexity gate that forced a real restructure instead of a config edit.
-- The orchestrator: seven pipeline tests with a fake agent, and one real ticket taken from queue to PASS verdict with no hand steps (5 min 20 s builder, 2 min verifier, ≈ $3.80 equivalent).
+- The orchestrator: seven pipeline tests with a fake agent, and one real ticket taken from queue to PASS verdict with no hand steps (5 min 20 s builder, 2 min verifier, ≈ $3.80 equivalent), and a second real ticket where a forced gate failure went back to the same builder session and passed on attempt two.
 
 ## Not yet
 
 - A real app with a database, auth and dependencies.
 - Anything unattended: the orchestrator on a schedule, preview, deploy.
-- The orchestrator's retry path on a real agent (first real ticket passed first time).
+- A real verifier FAIL sent back through the orchestrator (a forced gate failure has been; see the test log).
 - Quota cost per ticket against the weekly limit.
 - A sandboxed agent user and automatic process cleanup.
 - Sensors that catch bugs in production.
