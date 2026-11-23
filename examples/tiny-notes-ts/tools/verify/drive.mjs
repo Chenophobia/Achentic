@@ -78,6 +78,13 @@ async function startApp(log) {
 
 async function runAddDelete({ cdp, log, baseUrl }) {
   const noteText = `verify-${Date.now()}`;
+  const before = await (await fetch(`${baseUrl}/api/notes`)).json();
+  const expectedBefore = `${before.length} ${before.length === 1 ? "note" : "notes"}`;
+  const countBefore = await cdp.evalExpr(`document.querySelector("#note-count").textContent`);
+  await log(`note count before add: "${countBefore}"`);
+  if (countBefore !== expectedBefore) {
+    throw new Error(`expected note count "${expectedBefore}" before add, got "${countBefore}"`);
+  }
   await cdp.screenshot(join(evidenceDir, "add-delete-01-loaded.png"));
 
   await cdp.evalExpr(`
@@ -98,12 +105,19 @@ async function runAddDelete({ cdp, log, baseUrl }) {
     { timeoutMs: 5000, label: "note appearing in the DOM" },
   );
   await log("note appeared in the DOM after render()");
-  await cdp.screenshot(join(evidenceDir, "add-delete-02-added.png"));
 
   const listed = await (await fetch(`${baseUrl}/api/notes`)).json();
   const created = listed.find((n) => n.text === noteText);
   if (!created) throw new Error("note not present via GET /api/notes after add");
   await log(`verified via API: note id ${created.id} stored with text "${created.text}"`);
+
+  const expectedAfterAdd = `${listed.length} ${listed.length === 1 ? "note" : "notes"}`;
+  const countAfterAdd = await cdp.evalExpr(`document.querySelector("#note-count").textContent`);
+  await log(`note count after add: "${countAfterAdd}"`);
+  if (countAfterAdd !== expectedAfterAdd) {
+    throw new Error(`expected note count "${expectedAfterAdd}" after add, got "${countAfterAdd}"`);
+  }
+  await cdp.screenshot(join(evidenceDir, "add-delete-02-added.png"));
 
   await cdp.evalExpr(`
     (() => {
@@ -122,11 +136,18 @@ async function runAddDelete({ cdp, log, baseUrl }) {
       ),
     { timeoutMs: 5000, label: "note disappearing from the DOM" },
   );
-  await cdp.screenshot(join(evidenceDir, "add-delete-03-deleted.png"));
 
   const after = await (await fetch(`${baseUrl}/api/notes`)).json();
   if (after.some((n) => n.id === created.id)) throw new Error("note still present via GET /api/notes after delete");
   await log(`verified via API: note id ${created.id} no longer stored`);
+
+  const expectedAfterDelete = `${after.length} ${after.length === 1 ? "note" : "notes"}`;
+  const countAfterDelete = await cdp.evalExpr(`document.querySelector("#note-count").textContent`);
+  await log(`note count after delete: "${countAfterDelete}"`);
+  if (countAfterDelete !== expectedAfterDelete) {
+    throw new Error(`expected note count "${expectedAfterDelete}" after delete, got "${countAfterDelete}"`);
+  }
+  await cdp.screenshot(join(evidenceDir, "add-delete-03-deleted.png"));
 }
 
 async function runDarkMode({ cdp, log, baseUrl }) {

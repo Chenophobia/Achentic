@@ -20,6 +20,7 @@
   <body>
     <header>
       <h1>Tiny Notes</h1>
+      <span id="note-count" aria-live="polite"></span>
       <button id="theme-toggle" type="button"></button>
     </header>
     <form id="new-note">
@@ -31,6 +32,7 @@
     <script type="module">
       const MAX_NOTE_LENGTH = 280;
       const list = document.querySelector("#notes");
+      const noteCount = document.querySelector("#note-count");
       const form = document.querySelector("#new-note");
       const input = document.querySelector("#text");
       const remaining = document.querySelector("#remaining");
@@ -67,6 +69,7 @@
 
       async function render() {
         const notes = await (await fetch("/api/notes")).json();
+        noteCount.textContent = `${notes.length} ${notes.length === 1 ? "note" : "notes"}`;
         list.replaceChildren(
           ...notes.map((note) => {
             const item = document.createElement("li");

@@ -304,6 +304,8 @@ Settles: the loop works with the agents confined. Costs: the verifier no longer 
 
 Running total: twenty-one ticket runs plus three probes ≈ $31 API-equivalent.
 
+Branch `agent/004-note-count` merged by hand the same day, no conflict (the first merge since tickets stopped moving). Gates green, drive 4 of 4, exported to `examples/tiny-notes-ts`.
+
 Also untested: the GitHub-issues poller sketch and gate script in [03-setup-runbook.md](03-setup-runbook.md). The CLI flags in them (`--permission-mode auto`, `--permission-prompts none`, `--max-turns`, `--bare`, `--max-budget-usd`) come from the docs as reported by researchers; confirm against `claude --help` on your install.
 
 The reconciliation of pstack with Pocock's skills is this project's own judgment. Neither author mentions the other.
