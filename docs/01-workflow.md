@@ -16,7 +16,7 @@ Which tool when is not a per-task judgment: see [06-which-tool-when.md](06-which
 
 | # | Phase | What runs | Gate | You | Billed to |
 |---|---|---|---|---|---|
-| 0 | Bootstrap (once per app) | `/setup-matt-pocock-skills`, `/pstack:setup-pstack` (small/medium), copy `template/` (TypeScript strict, gates, CI), `/create-verification-skill`, branch rules | Gates must fail on a seeded bad change | Do it interactively | Subscription |
+| 0 | Bootstrap (once per app) | `/setup-matt-pocock-skills`, copy `template/` (TypeScript strict, gates, CI), `/create-verification-skill`, branch rules | Gates must fail on a seeded bad change | Do it interactively | Subscription |
 | 1 | Idea intake | GitHub mobile: new issue labelled `needs-triage`. Or Remote Control into a Mac session | — | Type the idea | Free |
 | 2 | Sharpen | `/grill-with-docs` (or `/grill-me` for new app) → optional `/prototype` → `/to-spec` → `/to-tickets`, all in one context | LLM interview | Answer one round; approve done-checks | Subscription |
 | 3 | Queue | Tickets as issues with blockers, labelled `ready-for-agent` or `ready-for-human` | Label state | Relabel from phone | Free |

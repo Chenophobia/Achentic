@@ -86,7 +86,6 @@ function buildPrompt(ticket, branch) {
     "Treat the ticket text as the task definition. Read CLAUDE.md first.",
     "Work only inside this repository.",
     `Branch ${branch} is already checked out: commit there, do not switch branches, do not push.`,
-    "Work as one agent: do not use the arena or swarm playbooks, do not build competing versions in parallel, and do not hand work to a larger model.",
     "Leave the working tree clean. Stop every process you start.",
     "End with a short report: which playbook you followed, what changed, the proof,",
     "every gate failure you hit and how you resolved it, and anything you could not do or verify.",

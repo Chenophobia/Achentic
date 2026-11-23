@@ -61,17 +61,23 @@ Environment variables, all optional.
 | `ACHENTIC_GATES` | `sh scripts/gates.sh` | Gate command |
 | `ACHENTIC_DAILY_CAP` | `3` | Tickets started per day |
 | `ACHENTIC_MAX_ATTEMPTS` | `3` | Builder attempts per ticket |
-| `ACHENTIC_BUILD_MAX_USD` | `6` | Spending cap for one builder run, API-equivalent. Going over blocks the ticket |
-| `ACHENTIC_VERDICT_MAX_USD` | `4` | Same for one verifier run |
+| `ACHENTIC_BUILD_MAX_USD` | `25` | Runaway guard for one builder run, API-equivalent. Going over blocks the ticket |
+| `ACHENTIC_VERDICT_MAX_USD` | `8` | Same for one verifier run |
 | `ACHENTIC_BUILDER_MODEL` | `sonnet` | |
 | `ACHENTIC_VERIFIER_MODEL` | `opus` | |
-| `ACHENTIC_BUILD_MINUTES` | `30` | Builder timeout |
-| `ACHENTIC_VERDICT_MINUTES` | `20` | Verifier timeout |
+| `ACHENTIC_BUILD_MINUTES` | `60` | Builder timeout |
+| `ACHENTIC_VERDICT_MINUTES` | `30` | Verifier timeout |
 | `ACHENTIC_GATES_MINUTES` | `10` | Gates and verify timeout |
 | `ACHENTIC_NTFY_URL` | unset | An ntfy topic URL. Unset means log only |
 | `ACHENTIC_SANDBOX` | unset | `1` runs both agents inside Claude Code's sandbox. See [setup/agent-user](../setup/agent-user/README.md) |
 | `ACHENTIC_HEARTBEAT_URL` | unset | Pinged with the result after every run. See [sensors/uptime-kuma](../sensors/uptime-kuma/README.md) |
 | `ACHENTIC_CLAUDE_BIN` | `claude` | Used by the tests to substitute a fake |
+
+## pstack runs at its defaults
+
+The orchestrator does not restrict how pstack works. pstack may hand parts of a ticket to subagents on larger models, or build competing versions and pick one (its arena). `--model sonnet` sets the lead agent only. Do not run `/pstack:setup-pstack` with a reduced budget unless you want to cut usage.
+
+What that means for usage: a simple ticket has cost $3 to $4 API-equivalent, and the one ticket where pstack ran its arena cost $15 and took 28 minutes. The caps above are set to let that through and stop only a runaway. The daily ticket cap is the brake that protects the weekly limit.
 
 ## State
 

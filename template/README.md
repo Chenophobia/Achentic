@@ -9,7 +9,7 @@ Starting point for a new app that agents will build. TypeScript strict, six dete
 3. `npm ci`
 4. `npm run gates` — must print `gates: ok`.
 5. Replace `src/` and `test/` with the real app. Keep the configuration.
-6. In Claude Code, inside the repo: `/pstack:setup-pstack` (small or medium budget), then `/pstack:create-verification-skill`.
+6. In Claude Code, inside the repo: `/pstack:create-verification-skill`. pstack runs at its default model choices; run `/pstack:setup-pstack` only if you want to reduce usage.
 7. On GitHub: protect the default branch and require the `gates` check.
 
 ## Gates

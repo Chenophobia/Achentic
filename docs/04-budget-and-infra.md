@@ -22,7 +22,7 @@
 
 Fable: counts for up to half the weekly limit. Reserve for a rare stuck root-cause hunt.
 
-pstack defaults (Opus xhigh, three-seat panels) assume a far bigger budget. Scale down in `/setup-pstack`. Save `/poteto-mode` for work that needs rigor.
+Decided 2026-11-23: pstack runs at its defaults (larger models for subagents, competing versions when it judges them useful). No reduced budget in `/setup-pstack`. The weekly limit is protected by the daily ticket cap and the per-run runaway guard instead. If the weekly limit starts to bite, `/pstack:setup-pstack` with a small budget is the first lever.
 
 ## The $20 API budget
 

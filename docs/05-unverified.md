@@ -336,6 +336,8 @@ Not done: GlitchTip's web sign-up and token screens, scheduling, feeding such a 
 
 Running total: about twenty-six runs ≈ $47 API-equivalent.
 
+Changed later the same day at the owner's request: pstack runs at its defaults. The one-agent instruction was removed, the per-run guard raised to $25 (builder) and $8 (verifier), the builder timeout to 60 minutes. Reason given: a Max plan, no need for a small budget. Not yet run on a ticket with these settings.
+
 Also untested: the GitHub-issues poller sketch and gate script in [03-setup-runbook.md](03-setup-runbook.md). The CLI flags in them (`--permission-mode auto`, `--permission-prompts none`, `--max-turns`, `--bare`, `--max-budget-usd`) come from the docs as reported by researchers; confirm against `claude --help` on your install.
 
 The reconciliation of pstack with Pocock's skills is this project's own judgment. Neither author mentions the other.

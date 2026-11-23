@@ -22,7 +22,7 @@ Avoid `no-session/pstack` — it is a gstack fork, unrelated.
 ## Bootstrap (once per app)
 
 1. `/setup-matt-pocock-skills`
-2. `/pstack:setup-pstack` — choose **small** or **medium** budget, shorten review panels, set roles to inherit parent model.
+2. Skip `/pstack:setup-pstack`: pstack runs at its defaults (decided 2026-11-23). Run it with a small budget only if the weekly limit becomes a problem.
 3. `/pstack:create-verification-skill` → produces `verify-<app>`.
 4. Start from `template/`: strict `tsconfig.json`, Biome, knip, jscpd, no-comments gate, `scripts/gates.sh`, GitHub Actions workflow, `CLAUDE.md`. Tested 2026-11-22.
 5. Protect `main`: required checks, no direct push.

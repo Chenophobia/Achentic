@@ -107,7 +107,7 @@ Pocock's skills are never called by the orchestrator. You type them yourself whe
 
 | Uses your Claude Max quota | Per ticket, measured |
 |---|---|
-| Builder (Sonnet) | $1.00 to $2.50 API-equivalent, 1 to 5 minutes |
+| Builder (Sonnet lead; pstack may add larger models) | $1.00 to $2.50 API-equivalent, 1 to 5 minutes. Once $13.60, 28 minutes |
 | Verifier (Opus) | $1.20 to $1.70, 1 to 2 minutes |
 | A retry | About $1 more |
 
@@ -117,11 +117,12 @@ Pocock's skills are never called by the orchestrator. You type them yourself whe
 | GitHub Actions (free for a public repository) |
 | Live check, Uptime Kuma, heartbeats, phone alerts |
 
-- One ticket costs about **$3 to $4 API-equivalent**. On the subscription you are not billed that; it comes out of the weekly limit. How much of the weekly limit is not measured yet.
+- A simple ticket costs about **$3 to $4 API-equivalent**, a hard one up to $15. On the subscription you are not billed that; it comes out of the weekly limit. How much of the weekly limit is not measured yet.
 - All runs so far, about 26: roughly $47 API-equivalent, $15 of it one ticket.
 - The $20 API budget is used by nothing that is built. The run wrapper removes `ANTHROPIC_API_KEY` so a run cannot fall back to paid use.
-- Brakes: 3 tickets a day, 3 attempts a ticket, one ticket at a time, 2 sensor tickets a day, and a spending cap per agent run ($6 builder, $4 verifier).
-- One ticket went far over: $13.60 for the builder, because pstack built three competing versions on larger models. The cap and a one-agent instruction were added after it. Run `/pstack:setup-pstack` with a small budget in each app repo.
+- pstack runs at its defaults. On a ticket it finds hard it may build competing versions on larger models and pick one. That happened once: $15 and 28 minutes instead of $3 and 5.
+- Brakes: 3 tickets a day, 3 attempts a ticket, one ticket at a time, 2 sensor tickets a day. A runaway guard stops a single agent run at $25 (builder) or $8 (verifier).
+- If the weekly limit starts to bite: `/pstack:setup-pstack` with a small budget in the app repo.
 
 ## 7. Run it by hand
 

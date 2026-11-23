@@ -107,7 +107,7 @@ test("each agent run carries its own spending cap, and going over it blocks the 
   await runOnce(config, state);
   const caps = calls().map((call) => call[call.indexOf("--max-budget-usd") + 1]);
   assert.deepEqual(caps, ["6", "4"]);
-  assert.match(calls()[0][1], /do not use the arena or swarm playbooks/);
+  assert.doesNotMatch(calls()[0][1], /arena|larger model/);
   const over = setup([{ error: true, result: null, subtype: "error_max_budget_usd" }]);
   assert.equal(await runOnce(over.config, over.state), "blocked");
   assert.match(over.state.tickets["001-thing"].reason, /error_max_budget_usd/);
