@@ -54,9 +54,16 @@ async function command(config, label, line) {
   return retry(`${label} (${line}) ${reason}:\n${tail(outcome.stdout + outcome.stderr, 60)}`);
 }
 
-function verify(config) {
+async function verify(config) {
   if (!existsSync(join(config.repo, "tools/verify/drive.mjs"))) return ok();
-  return command(config, "Browser verification", "node tools/verify/drive.mjs all");
+  const line = "node tools/verify/drive.mjs all";
+  const outcome = await run("node", ["tools/verify/drive.mjs", "all"], { cwd: config.repo, timeoutMs: config.gatesTimeoutMs });
+  const output = outcome.stdout + outcome.stderr;
+  mkdirSync(join(config.repo, ".verify-evidence"), { recursive: true });
+  writeFileSync(join(config.repo, ".verify-evidence/orchestrator-drive.txt"), `$ ${line}\n${output}\nexit ${outcome.code}\n`);
+  if (outcome.code === 0 && !outcome.timedOut) return ok();
+  const reason = outcome.timedOut ? "timed out" : `exited ${outcome.code}`;
+  return retry(`Browser verification (${line}) ${reason}:\n${tail(output, 60)}`);
 }
 
 function record(state, id, role, attempt, model, result) {

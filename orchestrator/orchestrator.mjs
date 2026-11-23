@@ -25,6 +25,7 @@ function configFor(repo) {
     builderModel: env.ACHENTIC_BUILDER_MODEL ?? "sonnet",
     verifierModel: env.ACHENTIC_VERIFIER_MODEL ?? "opus",
     ntfyUrl: env.ACHENTIC_NTFY_URL,
+    sandbox: env.ACHENTIC_SANDBOX === "1",
     dailyCap: number("ACHENTIC_DAILY_CAP", 3),
     maxAttempts: number("ACHENTIC_MAX_ATTEMPTS", 3),
     buildTimeoutMs: number("ACHENTIC_BUILD_MINUTES", 30) * MINUTE,

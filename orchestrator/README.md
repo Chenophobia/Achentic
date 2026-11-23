@@ -67,6 +67,7 @@ Environment variables, all optional.
 | `ACHENTIC_VERDICT_MINUTES` | `20` | Verifier timeout |
 | `ACHENTIC_GATES_MINUTES` | `10` | Gates and verify timeout |
 | `ACHENTIC_NTFY_URL` | unset | An ntfy topic URL. Unset means log only |
+| `ACHENTIC_SANDBOX` | unset | `1` runs both agents inside Claude Code's sandbox. See [setup/agent-user](../setup/agent-user/README.md) |
 | `ACHENTIC_HEARTBEAT_URL` | unset | Pinged with the result after every run. See [sensors/uptime-kuma](../sensors/uptime-kuma/README.md) |
 | `ACHENTIC_CLAUDE_BIN` | `claude` | Used by the tests to substitute a fake |
 
@@ -95,11 +96,11 @@ Before starting it: `claude auth status` shows the personal Max account, and `no
 node --test orchestrator/test/orchestrator.test.mjs
 ```
 
-Eight tests drive the whole pipeline against a throwaway git repository with a fake agent: pass, gate failure and retry, three failed verdicts, protected file, edited scripts, dirty tree, meddling verifier, agent error, daily cap, held and stale lock, and two open tickets merged without conflict.
+Nine tests drive the whole pipeline against a throwaway git repository with a fake agent: pass, gate failure and retry, three failed verdicts, protected file, edited scripts, dirty tree, meddling verifier, agent error, daily cap, held and stale lock, and two open tickets merged without conflict.
 
 ## Not done
 
-- It runs as your user, not a sandboxed agent user.
+- Sandbox mode covers the agents' commands, not the gates and browser drive the orchestrator runs itself. The separate user that covers those is scripted but not yet set up.
 - Tickets come from files, not GitHub issues. It opens no pull request.
 - No sensors yet: nothing turns a production error into a ticket.
 - One app repo per LaunchAgent; runs for different apps are not coordinated against the weekly limit.

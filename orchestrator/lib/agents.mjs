@@ -1,3 +1,5 @@
+import { execFileSync } from "node:child_process";
+import { writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { run } from "./proc.mjs";
@@ -33,6 +35,49 @@ const VERIFIER_TOOLS = [
   "Bash(git status *)",
 ];
 
+const SECRET_DIRS = ["~/.ssh", "~/.aws", "~/.gnupg", "~/.config/gh", "~/Library/Keychains"];
+const SECRET_FILES = ["~/.netrc", "~/.claude/.credentials.json"];
+
+const SANDBOX_NOTE = [
+  "You are running inside an operating-system sandbox: commands can write only inside this repository and the temp folder,",
+  "and can reach only localhost and the npm registry. Headless Chrome cannot start inside it, so do not run the browser flows of tools/verify/drive.mjs;",
+  "the orchestrator runs them after you and saves the output to .verify-evidence/orchestrator-drive.txt.",
+  "Flows that use plain HTTP, the tests and the gates do work. A command blocked by the sandbox is expected: do not look for a way around it.",
+].join(" ");
+
+function userTempDir() {
+  if (process.platform !== "darwin") return [];
+  const dir = execFileSync("getconf", ["DARWIN_USER_TEMP_DIR"], { encoding: "utf8" }).trim().replace(/\/$/, "");
+  return [dir, dir.startsWith("/private") ? dir : `/private${dir}`];
+}
+
+export function sandboxSettings() {
+  return {
+    sandbox: {
+      enabled: true,
+      failIfUnavailable: true,
+      autoAllowBashIfSandboxed: true,
+      allowUnsandboxedCommands: false,
+      filesystem: { denyRead: [...SECRET_DIRS, ...SECRET_FILES], allowWrite: userTempDir() },
+      network: { allowedDomains: ["registry.npmjs.org"], allowLocalBinding: true },
+    },
+    permissions: {
+      deny: [
+        ...SECRET_DIRS.map((path) => `Read(${path}/**)`),
+        ...SECRET_FILES.map((path) => `Read(${path})`),
+        "Edit(~/.claude/**)",
+      ],
+    },
+  };
+}
+
+function settingsArgs(config) {
+  if (!config.sandbox) return [];
+  const file = join(config.home, "agent-settings.json");
+  writeFileSync(file, `${JSON.stringify(sandboxSettings(), null, 2)}\n`);
+  return ["--settings", file];
+}
+
 const VERDICT_LINE = /^VERDICT: (PASS\+NOTES|PASS|FAIL)\s*$/gm;
 
 function buildPrompt(ticket, branch) {
@@ -63,7 +108,8 @@ function verdictPrompt(ticket, branch, base) {
     `The change is branch ${branch} compared with ${base} (ticket: ${ticket}); the checkout is already on that branch.`,
     "Give the non-author live verdict that pstack's Shipping playbook requires.",
     "Rules: do not edit, commit or revert anything in this repository.",
-    "Run sh scripts/gates.sh. If tools/verify/drive.mjs exists, drive the real running app with node tools/verify/drive.mjs all.",
+    "Run sh scripts/gates.sh. If tools/verify/drive.mjs exists, drive the real running app with node tools/verify/drive.mjs all",
+    "(or, if you cannot start a browser, read the orchestrator's run of it in .verify-evidence/orchestrator-drive.txt).",
     "Check the ticket's done-check on the running app yourself, then try to break the change with real runs the author did not make.",
     "Judge the code against CLAUDE.md's standards; for any type assertion or other escape hatch the change adds, say whether it is sound.",
     "Keep only findings a rerun proves. Stop every process you start and confirm none is left.",
@@ -92,9 +138,11 @@ function parse(outcome) {
 }
 
 async function claude(config, { prompt, model, mode, tools, resume, timeoutMs }) {
-  const args = ["-p", prompt, "--model", model, "--permission-mode", mode];
+  const text = config.sandbox ? `${prompt}\n\n${SANDBOX_NOTE}` : prompt;
+  const args = ["-p", text, "--model", model, "--permission-mode", mode];
   if (resume !== undefined) args.push("--resume", resume);
   args.push("--allowedTools", ...tools);
+  args.push(...settingsArgs(config));
   args.push("--add-dir", PSTACK_CACHE, "--output-format", "json");
   const started = Date.now();
   const outcome = await run(config.claudeBin, args, { cwd: config.repo, timeoutMs });

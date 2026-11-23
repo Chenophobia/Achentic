@@ -83,6 +83,23 @@ test("two open tickets merge without conflict and stay done without the state fi
   assert.equal(await runOnce(config, fresh), "idle");
 });
 
+test("sandbox mode passes a settings file that confines commands and tells the agents", async () => {
+  const { config, state, calls } = setup([GOOD, PASS]);
+  assert.equal(await runOnce({ ...config, sandbox: true, home: state.dir }, state), "review");
+  for (const call of calls()) {
+    const settings = JSON.parse(readFileSync(call[call.indexOf("--settings") + 1], "utf8"));
+    assert.equal(settings.sandbox.enabled, true);
+    assert.equal(settings.sandbox.allowUnsandboxedCommands, false);
+    assert.deepEqual(settings.sandbox.network.allowedDomains, ["registry.npmjs.org"]);
+    assert.ok(settings.permissions.deny.includes("Read(~/.ssh/**)"));
+    assert.ok(settings.permissions.deny.includes("Edit(~/.claude/**)"));
+    assert.match(call[1], /operating-system sandbox/);
+  }
+  const plain = setup([GOOD, PASS]);
+  await runOnce(plain.config, plain.state);
+  assert.ok(plain.calls().every((call) => !call.includes("--settings")));
+});
+
 test("gate failure goes back to the same builder session with the output", async () => {
   const fix = { remove: ["bad"], commit: true };
   const { config, state, calls } = setup([{ write: { bad: "x" }, commit: true }, fix, { result: "ok\nVERDICT: PASS+NOTES" }]);

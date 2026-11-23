@@ -289,6 +289,21 @@ Compose file for Uptime Kuma 2.5.12, bound to localhost, plus heartbeat pings fr
 
 Not done: admin account, monitors, ntfy notification and push monitors inside Uptime Kuma (they need an account only the owner should create). Outside pinger for the "whole house is down" case.
 
+## Sandbox mode and agent user — 2026-11-23, `setup/agent-user/`
+
+| Step | Result |
+|---|---|
+| Probe script run inside a sandboxed agent (Haiku, $0.14) | Writes outside the repository, `~/.ssh`, `~/.config/gh`, keychain query, example.com and github.com all blocked. Repository writes, npm registry and local ports allowed |
+| Gates inside the sandbox | Failed at first (`mktemp` in the system temp folder); pass once that folder is writable |
+| Headless Chrome inside the sandbox | Cannot start: needs a local socket. The only setting that allows it opens every local socket, Docker's included. Left blocked; the orchestrator runs the browser drive instead and saves the output for the agents |
+| Real ticket 004 (note count, browser-only feature) with `ACHENTIC_SANDBOX=1` | `review`, `PASS`, first attempt, 3 min 30 s. Builder $1.11, verifier $1.69. Builder wrote the browser check without being able to run it; the orchestrator's drive passed 4 of 4 |
+| Verifier inside the sandbox | Read the orchestrator's drive output, did its own HTTP checks. One command it tried was denied |
+| Agent-user scripts | Syntax-checked, daemon file passes `plutil -lint`. Not run: they need `sudo` on the Mac mini |
+
+Settles: the loop works with the agents confined. Costs: the verifier no longer drives a browser itself. Does not settle: anything about the separate user, Chrome without a login session, the token under launchd.
+
+Running total: twenty-one ticket runs plus three probes ≈ $31 API-equivalent.
+
 Also untested: the GitHub-issues poller sketch and gate script in [03-setup-runbook.md](03-setup-runbook.md). The CLI flags in them (`--permission-mode auto`, `--permission-prompts none`, `--max-turns`, `--bare`, `--max-budget-usd`) come from the docs as reported by researchers; confirm against `claude --help` on your install.
 
 The reconciliation of pstack with Pocock's skills is this project's own judgment. Neither author mentions the other.
