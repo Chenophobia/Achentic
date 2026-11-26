@@ -393,6 +393,16 @@ Asked for by the owner: see the work in phases (plan, design, build, test, deplo
 
 Not done: a real agent has not yet been asked to write the two notes. The prompt for it is untested on a real run; the Claude CLI on the test machine was still on a work login. `docs/08-phases.md` assigns pstack's skills to phases by reading their descriptions; pstack itself does not define phases.
 
+## CI browser-drive failure, cause found — 2026-11-26
+
+The CI run for the phases commit failed in the plain-JavaScript example's browser drive. The annotation added earlier gave the reason for the first time: `[add-delete] FAILED: Error: ENOTEMPTY: directory not empty, rmdir '/tmp/tiny-notes-verify-…/Default'`. The flow itself had passed; removing Chrome's temporary profile failed because Chrome's helper processes were still writing to it. Six tries over one second were not enough on the CI machine.
+
+| Change | Check |
+|---|---|
+| Both examples' `tools/verify/lib/harness.mjs`: removal retried ten times with growing waits; if it still fails, a warning is printed and the flow's result stands | Both drives and both gate scripts exit 0 locally; 35 tests pass |
+
+Not proven: that this was also the cause of the two earlier CI failures (their logs were not readable), and that the failure is gone on CI; it did not reproduce locally before or after. A leftover profile directory in the temp folder is now possible and is not cleaned up later.
+
 Also untested: the GitHub-issues poller sketch and gate script in [03-setup-runbook.md](03-setup-runbook.md). The CLI flags in them (`--permission-mode auto`, `--permission-prompts none`, `--max-turns`, `--bare`, `--max-budget-usd`) come from the docs as reported by researchers; confirm against `claude --help` on your install.
 
 The reconciliation of pstack with Pocock's skills is this project's own judgment. Neither author mentions the other.

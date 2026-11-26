@@ -108,16 +108,13 @@ export async function stopChrome(handle) {
   const exited = new Promise((resolve) => handle.proc.once("exit", resolve));
   handle.proc.kill();
   await Promise.race([exited, sleep(2000)]);
-  // Chrome can still be flushing its profile dir (Service Worker cache, etc.)
-  // for a moment after the process exits; retry past transient ENOTEMPTY/EBUSY.
-  for (let attempt = 0; ; attempt++) {
-    try {
-      await rm(handle.userDataDir, { recursive: true, force: true });
-      return;
-    } catch (err) {
-      if (attempt >= 5) throw err;
-      await sleep(200);
-    }
+  // Chrome's helper processes can outlive the main one and keep writing to
+  // the profile dir, so removal is retried. A leftover temp dir says nothing
+  // about the app: warn and move on rather than fail the flow.
+  try {
+    await rm(handle.userDataDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+  } catch (err) {
+    console.error(`warning: could not remove chrome profile ${handle.userDataDir}: ${err.message}`);
   }
 }
 
