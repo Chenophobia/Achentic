@@ -4,3 +4,4 @@ node_modules/
 sandbox/
 
 sensors/glitchtip/.env
+.claude/launch.json

@@ -365,6 +365,21 @@ ntfy is gone; `ACHENTIC_NTFY_URL` is replaced by `ACHENTIC_DISCORD_WEBHOOK_URL`.
 
 Not done: a real issue through the intake, a real Discord channel, the issue form rendered on GitHub. Nothing writes back to the issue.
 
+## Mission control — 2026-11-26, `mission-control/`
+
+A zero-dependency web page over the files the orchestrator and Claude Code already write. Requested by the owner: one place for all projects, with each ticket's whole workflow and which agents and skills did what.
+
+| Step | Result |
+|---|---|
+| Tests on a made-up project and run record | 5 of 5: stations and tallies; timeline, skills, tools, helper agents, verdict; new ticket into the inbox without touching the repository; cross-site, wrong content type and odd paths refused; access word |
+| Orchestrator test | An idea in the inbox becomes a numbered, committed ticket and is built |
+| Against the sandbox's real history | Five tickets listed at the right stations. Ticket 005 showed `pstack:poteto-mode`, the feature playbook, the arena skill, four helper agents (Fable, Opus, Sonnet, an Opus judge) with tool counts, and the verdict |
+| In a browser | Desktop and phone width looked at; New ticket form opens; no console errors |
+
+Found while looking: nested lists rendered as `[object …]` in the ticket panel; fixed.
+
+Not done: the "Working now" panel during a real run. No agent was started: the Claude CLI on this MacBook was logged into a work account on that day. Also not done: behind Cloudflare Access, the keep-running daemon, the retry button on a real blocked ticket.
+
 Also untested: the GitHub-issues poller sketch and gate script in [03-setup-runbook.md](03-setup-runbook.md). The CLI flags in them (`--permission-mode auto`, `--permission-prompts none`, `--max-turns`, `--bare`, `--max-budget-usd`) come from the docs as reported by researchers; confirm against `claude --help` on your install.
 
 The reconciliation of pstack with Pocock's skills is this project's own judgment. Neither author mentions the other.

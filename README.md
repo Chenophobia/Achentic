@@ -14,6 +14,7 @@ On any Mac: clone this repository, open Claude Code in it and say **"set this ma
 sh setup/doctor.sh              # what is missing on this Mac
 sh setup/new-project.sh my-app  # new project from the template, gates green, first commit
 sh setup/status.sh              # jobs, queue, cost, last log lines
+node mission-control/server.mjs # the same and more in a browser: http://localhost:4400
 ```
 
 Deploying on the Mac mini from start to finish: [Deploy on Mac mini.pptx](Deploy%20on%20Mac%20mini.pptx), 14 slides.
@@ -38,6 +39,7 @@ Deploying on the Mac mini from start to finish: [Deploy on Mac mini.pptx](Deploy
 | [docs/06-which-tool-when.md](docs/06-which-tool-when.md) | pstack vs Pocock, decided |
 | [docs/07-code-standards.md](docs/07-code-standards.md) | Standards, enforcers, CI |
 | [orchestrator/](orchestrator) | The script that runs the loop: one ticket per run, retries, verdict, launchd installer, tests |
+| [mission-control/](mission-control) | One page for all projects: what runs now, every ticket's stations and full history (agents, skills, helper agents, cost), and a form to file tickets |
 | [intake/](intake) | GitHub issues in, Discord progress out: create work and follow it from anywhere |
 | [sensors/](sensors) | Scripts that watch a deployed app and file tickets. First one: the scheduled live check |
 | [setup/](setup) | `SETUP.md` (the playbook), `doctor.sh`, `new-project.sh`, `status.sh` |

@@ -2,7 +2,7 @@
 set -eu
 
 if [ $# -lt 2 ]; then
-  echo "usage: run-as-agent.sh <orchestrator|sensor|errors> <app-repo> [url] [org] [project]" >&2
+  echo "usage: run-as-agent.sh <orchestrator|sensor|errors|mission-control> <app-repo> [url] [org] [project]" >&2
   exit 1
 fi
 
@@ -21,6 +21,10 @@ if [ -z "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
 fi
 
 export ACHENTIC_SANDBOX=${ACHENTIC_SANDBOX:-1}
+
+if [ "$job" = "mission-control" ]; then
+  exec node "$here/mission-control/server.mjs"
+fi
 
 if git -C "$repo" remote get-url origin >/dev/null 2>&1; then
   git -C "$repo" pull -q --rebase || echo "could not pull $repo; running with what is here" >&2

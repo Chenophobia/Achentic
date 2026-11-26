@@ -1,8 +1,9 @@
-import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { build, judge } from "./agents.mjs";
 import { notify } from "./notify.mjs";
 import { git, run, tail } from "./proc.mjs";
+import { commitTicket, nextId } from "../../sensors/lib/tickets.mjs";
 
 const PROTECTED = [
   "scripts/gates.sh",
@@ -203,12 +204,29 @@ async function handle(config, state, id) {
   }
 }
 
+async function drainInbox(config, state) {
+  const folder = join(state.dir, "inbox");
+  if (!existsSync(folder)) return;
+  const waiting = readdirSync(folder).filter((name) => name.endsWith(".md")).sort();
+  if (waiting.length === 0) return;
+  if (git(config.repo, "status", "--porcelain") !== "" || git(config.repo, "branch", "--show-current") !== config.base) return;
+  for (const name of waiting) {
+    const id = nextId(config.repo, basename(name, ".md").replace(/^\d+-/, ""));
+    const body = readFileSync(join(folder, name), "utf8").trimEnd();
+    const text = `${body}\n\n## Constraints\n- Do not edit gate or CI configuration.\n- Commit locally on the branch \`agent/${id}\`. Do not push.\n`;
+    commitTicket(config.repo, id, text, `Ticket ${id} from mission control`);
+    rmSync(join(folder, name));
+    await notify(config, state, `${basename(config.repo)} ${id}: queued`, "From mission control");
+  }
+}
+
 export async function runOnce(config, state) {
   if (!state.lock()) {
     state.log("another run holds the lock");
     return "locked";
   }
   try {
+    await drainInbox(config, state);
     const [id] = queue(config, state);
     if (id === undefined) return "idle";
     const problem = preflight(config, state);

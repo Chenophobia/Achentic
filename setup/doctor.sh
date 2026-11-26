@@ -79,7 +79,7 @@ fi
 
 echo
 echo "This checkout"
-if node --test "$here"/orchestrator/test/*.test.mjs "$here"/sensors/test/*.test.mjs "$here"/intake/test/*.test.mjs >/dev/null 2>&1; then
+if node --test "$here"/orchestrator/test/*.test.mjs "$here"/sensors/test/*.test.mjs "$here"/intake/test/*.test.mjs "$here"/mission-control/test/*.test.mjs >/dev/null 2>&1; then
   ok "orchestrator and sensor tests pass"
 else
   need "orchestrator and sensor tests" "node --test orchestrator/test/*.test.mjs sensors/test/*.test.mjs"

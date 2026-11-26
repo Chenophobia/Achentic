@@ -29,6 +29,7 @@ You write a ticket. A script hands it to an agent that builds it. Plain scripts 
 | Live check | `sensors/verify-live.mjs` | Hourly: is the live app working for a user? Files a ticket if not | Built, tested locally |
 | Uptime check | `sensors/uptime-kuma/` | Every minute: is it up? Are the jobs still running? Alerts only | Built, setup is yours |
 | Error collection | `sensors/glitchtip/`, `sensors/errors.mjs` | Hourly: any new error in the live app? Files a ticket per error | Built, ran end to end once |
+| Mission control | `mission-control/` | One page for all projects: running now, every ticket's stations and history with agents, skills and helper agents; a form to file tickets | Built, tested, seen on real history |
 | Intake + progress | `intake/`, `orchestrator/lib/notify.mjs` | A GitHub issue becomes a ticket; every step is posted to Discord | Built, tested against fakes |
 | CI | `.github/workflows/ci.yml` | Runs the gates on GitHub on every push | Running |
 | Agent user | `setup/agent-user/` | A separate macOS account that owns nothing valuable | Scripts written, not run |
@@ -143,7 +144,7 @@ Then per ticket:
 
 | Step | Command |
 |---|---|
-| Write a ticket | Open a GitHub issue with the "Ticket for the agents" form, or copy `tickets/TEMPLATE.md` to `tickets/ready/001-name.md` and commit on `main` |
+| Write a ticket | Mission control → New ticket. Or open a GitHub issue with the "Ticket for the agents" form, or copy `tickets/TEMPLATE.md` to `tickets/ready/001-name.md` and commit on `main` |
 | Run the loop once | `node orchestrator/orchestrator.mjs run --repo ~/work/my-app` |
 | See where things stand | `node orchestrator/orchestrator.mjs status --repo ~/work/my-app` |
 | Read the verdict | `docs/verdicts/verdict-001-name.md` on branch `agent/001-name` |

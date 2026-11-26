@@ -30,6 +30,7 @@ Do these in order. Each has its own guide; this table is the order and the check
 | 4 | You | As that user: `claude setup-token`, paste the token into `~/.achentic/env` as `CLAUDE_CODE_OAUTH_TOKEN=…` | same | The file has the line; nobody else can read it |
 | 5 | You | As that user: one ticket by hand, `sh setup/agent-user/run-as-agent.sh orchestrator ~/work/<app>` | same | It ends in `review` or `blocked`, not an error |
 | 6 | You | Schedule the orchestrator: `sudo sh setup/agent-user/install-daemon.sh agent orchestrator /Users/agent/work/<app>`, then the start command it prints | same | `sh setup/status.sh` shows it loaded |
+| 6b | You | Keep mission control running: `sudo sh setup/agent-user/install-daemon.sh agent mission-control /Users/agent/work/Achentic`; add `ACHENTIC_MC_TOKEN=…` to the agent's env; publish it behind Cloudflare Access | [../mission-control/README.md](../mission-control/README.md) | The page lists the project and its tickets; a ticket filed there is built on the next run |
 | 7 | You | Deploy the app so it has an address (see "Hosting" below) | — | The address answers |
 | 8 | You | Schedule the live check: `… install-daemon.sh agent sensor /Users/agent/work/<app> <address>` | [../sensors/README.md](../sensors/README.md) | Loaded; first run logs `ok` |
 | 9 | You | Start Uptime Kuma, create its admin, add monitors and the two push monitors | [../sensors/uptime-kuma/README.md](../sensors/uptime-kuma/README.md) | Monitors green |
@@ -60,7 +61,8 @@ On the unattended Mac, also clone it for the agent user and repeat level 2 steps
 
 | Question | Command or file |
 |---|---|
-| Everything at a glance | `sh setup/status.sh` |
+| Everything at a glance, with each ticket's full story | Mission control: http://localhost:4400 |
+| The same in a terminal | `sh setup/status.sh` |
 | What is in the queue, what is waiting for me | `node orchestrator/orchestrator.mjs status --repo <app>` |
 | What happened, step by step | `~/.achentic/<app>/orchestrator.log` |
 | What an agent actually said | `~/.achentic/<app>/logs/<ticket>-builder-1.json`, `…-verifier-1.json` |

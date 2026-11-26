@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
@@ -133,6 +133,19 @@ test("every step of a ticket is announced, in order", async () => {
       "ready to merge (PASS)",
     ],
   );
+});
+
+test("an idea left in the inbox becomes a numbered, committed ticket and is built", async () => {
+  const { repo, config, state } = setup([GOOD, PASS, GOOD]);
+  mkdirSync(join(state.dir, "inbox"), { recursive: true });
+  writeFileSync(join(state.dir, "inbox/1700000000000-dark-mode.md"), "# Dark mode\n\n## Goal\nA dark page.\n");
+  assert.equal(await runOnce(config, state), "review");
+  assert.equal(state.tickets["001-thing"].status, "review");
+  const text = readFileSync(join(repo, "tickets/ready/002-dark-mode.md"), "utf8");
+  assert.match(text, /^# Dark mode/);
+  assert.match(text, /agent\/002-dark-mode/);
+  assert.equal(readdirSync(join(state.dir, "inbox")).length, 0);
+  assert.equal(git(repo, "status", "--porcelain"), "");
 });
 
 test("gate failure goes back to the same builder session with the output", async () => {

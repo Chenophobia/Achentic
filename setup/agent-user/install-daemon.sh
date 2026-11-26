@@ -2,7 +2,7 @@
 set -eu
 
 if [ $# -lt 3 ]; then
-  echo "usage: sudo sh install-daemon.sh <agent-user> <orchestrator|sensor|errors> <app-repo> [url] [org] [project]" >&2
+  echo "usage: sudo sh install-daemon.sh <agent-user> <orchestrator|sensor|errors|mission-control> <app-repo> [url] [org] [project]" >&2
   exit 1
 fi
 
@@ -21,12 +21,26 @@ dest=${DEST:-/Library/LaunchDaemons}
 label="com.achentic.$job.$app"
 target="$dest/$label.plist"
 
+schedule=""
 case "$job" in
+  mission-control) interval=0 ;;
   orchestrator) interval=1800 ;;
   sensor) interval=3600; [ -n "$url" ] || { echo "sensor needs the app's address" >&2; exit 1; } ;;
   errors) interval=3600; [ -n "$project" ] || { echo "errors needs the tracker address, org slug and project slug" >&2; exit 1; } ;;
   *) echo "unknown job: $job" >&2; exit 1 ;;
 esac
+
+if [ "$interval" -eq 0 ]; then
+  schedule="<key>KeepAlive</key>
+  <true/>
+  <key>RunAtLoad</key>
+  <true/>"
+else
+  schedule="<key>StartInterval</key>
+  <integer>$interval</integer>
+  <key>RunAtLoad</key>
+  <false/>"
+fi
 
 cat > "$target" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -56,10 +70,7 @@ cat > "$target" <<PLIST
   </dict>
   <key>WorkingDirectory</key>
   <string>$home</string>
-  <key>StartInterval</key>
-  <integer>$interval</integer>
-  <key>RunAtLoad</key>
-  <false/>
+  $schedule
   <key>ProcessType</key>
   <string>Background</string>
   <key>StandardOutPath</key>
