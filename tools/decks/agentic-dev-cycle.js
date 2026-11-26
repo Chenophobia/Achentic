@@ -194,7 +194,7 @@ pres.addSection({ title: "How it works" });
   mono(s, [
     { text: 'claude -p "/pstack:poteto-mode', options: { breakLine: true, color: WHITE, bold: true } },
     { text: '   Implement the ticket in', options: { breakLine: true } },
-    { text: '   tickets/ready/004-note-count.md …"', options: { breakLine: true } },
+    { text: '   tickets/ready/TN-4.md …"', options: { breakLine: true } },
     { text: "  --model sonnet", options: { breakLine: true } },
     { text: "  --permission-mode acceptEdits", options: { breakLine: true } },
     { text: '  --allowedTools "Bash(node *)" …', options: { breakLine: true } },
@@ -329,11 +329,11 @@ pres.addSection({ title: "Run it" });
 {
   const s = content("Run it", "Run it by hand: five commands");
   const steps = [
-    ["Write a ticket", "tickets/ready/001-name.md   (copy tickets/TEMPLATE.md, commit on main)"],
+    ["Write a ticket", "mission control → New ticket   (or a file: tickets/ready/MA-1.md)"],
     ["Run the loop once", "node orchestrator/orchestrator.mjs run --repo ~/work/my-app"],
     ["See where things stand", "node orchestrator/orchestrator.mjs status --repo ~/work/my-app"],
-    ["Accept the result", "git merge agent/001-name   (then push)"],
-    ["Retry a blocked ticket", "node orchestrator/orchestrator.mjs retry 001-name --repo ~/work/my-app"],
+    ["Accept the result", "git merge agent/MA-1   (then push)"],
+    ["Retry a blocked ticket", "node orchestrator/orchestrator.mjs retry MA-1 --repo ~/work/my-app"],
   ];
   steps.forEach(([t, cmd], i) => {
     const y = 1.65 + i * 0.92;

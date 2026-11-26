@@ -23,7 +23,7 @@ What one run does:
 3. Runs the app's live check with `VERIFY_BASE_URL` set to the address.
 4. Pass: resets the count. If the app was failing or down before, sends "passing again".
 5. First failure: recorded as a suspect, nothing filed.
-6. Second failure in a row: writes `tickets/ready/NNN-live-<flow>.md`, commits it on the base branch, alerts, and keeps the screenshots and logs under `$ACHENTIC_HOME/<app>/sensor-evidence/`.
+6. Second failure in a row: writes a ticket titled "Live check failing: <flow>" to `tickets/ready/`, commits it on the base branch, alerts, and keeps the screenshots and logs under `$ACHENTIC_HOME/<app>/sensor-evidence/`.
 7. The same failure again while its ticket is open: counted, nothing filed.
 
 ### What the app must provide

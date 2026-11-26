@@ -11,10 +11,10 @@ Two levels. Stop after level 1 on a laptop. Go on to level 2 on the machine that
 | 1 | Claude | `sh setup/doctor.sh`. Fix each `MISSING` line with the command it prints, then run it again until it says `Ready` |
 | 2 | You | If the doctor asks for a Claude login: `claude auth login`, with the personal account |
 | 3 | Claude | `sh setup/new-project.sh <name>` for the first project. It ends with the next commands |
-| 4 | Claude + You | Write the first ticket together from `tickets/TEMPLATE.md`, save it as `tickets/ready/001-<what>.md`, commit |
+| 4 | Claude + You | Write the first ticket together from `tickets/TEMPLATE.md`, file it in mission control (`node mission-control/server.mjs`, New ticket), or save it as `tickets/ready/<KEY>-1.md` and commit, where the key is the project's initials |
 | 5 | Claude | `ACHENTIC_SANDBOX=1 node orchestrator/orchestrator.mjs run --repo ~/work/<name>` and wait. A simple ticket takes about five minutes |
-| 6 | Claude | `sh setup/status.sh`, then show the verdict file from the branch `agent/001-<what>` |
-| 7 | You | Read the verdict. `git merge agent/001-<what>` if you accept it |
+| 6 | Claude | `sh setup/status.sh`, then show the verdict from `docs/work/<ID>/4-test/verdict.md` on the branch `agent/<ID>` |
+| 7 | You | Read the verdict. `git merge agent/<ID>` if you accept it |
 
 Level 1 is done when one ticket has gone from file to verdict on this Mac.
 

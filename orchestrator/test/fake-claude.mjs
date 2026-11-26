@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { execFileSync } from "node:child_process";
-import { appendFileSync, existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
 
 const planFile = process.env.FAKE_PLAN;
 const plan = JSON.parse(readFileSync(planFile, "utf8"));
@@ -12,6 +13,13 @@ appendFileSync(`${planFile}.calls`, `${JSON.stringify(process.argv.slice(2))}\n`
 const step = plan[index] ?? { result: "no step planned", error: true };
 for (const [path, content] of Object.entries(step.write ?? {})) writeFileSync(path, content);
 for (const path of step.remove ?? []) rmSync(path);
+if (step.commit && !step.noNotes) {
+  const id = execFileSync("git", ["branch", "--show-current"], { encoding: "utf8" }).trim().replace("agent/", "");
+  for (const note of ["2-design/design.md", "3-build/report.md"]) {
+    mkdirSync(dirname(`docs/work/${id}/${note}`), { recursive: true });
+    writeFileSync(`docs/work/${id}/${note}`, `# ${note}\n`);
+  }
+}
 if (step.commit) {
   execFileSync("git", ["add", "-A"]);
   execFileSync("git", ["commit", "-q", "-m", `step ${index}`]);

@@ -36,11 +36,23 @@ function fixture() {
   git(repo, "config", "user.email", "t@localhost");
   git(repo, "add", "-A");
   git(repo, "commit", "-q", "-m", "init");
+  writeFileSync(join(repo, "tickets/ready/NOT-4.md"), "# Short id\n");
+  git(repo, "add", "-A");
+  git(repo, "commit", "-q", "-m", "ticket");
+  git(repo, "switch", "-q", "-c", "agent/NOT-4");
+  for (const [path, text] of [["2-design/design.md", "Chose the simple shape.\n"], ["3-build/report.md", "Did it.\n"], ["4-test/gates.txt", "gates: ok\n"], ["4-test/verdict.md", "VERDICT: PASS\n"]]) {
+    mkdirSync(join(repo, "docs/work/NOT-4", path, ".."), { recursive: true });
+    writeFileSync(join(repo, "docs/work/NOT-4", path), text);
+  }
+  git(repo, "add", "-A");
+  git(repo, "commit", "-q", "-m", "work");
+  git(repo, "switch", "-q", "main");
   writeFileSync(join(dir, "repo"), repo);
   writeFileSync(join(dir, "state.json"), JSON.stringify({
     tickets: {
       "001-count": { status: "review", branch: "agent/001-count", verdict: "PASS", attempts: 1 },
       "002-export": { status: "blocked", branch: "agent/002-export", reason: "Change touches protected files: biome.json\nmore" },
+      "NOT-4": { status: "review", branch: "agent/NOT-4", verdict: "PASS", attempts: 1 },
     },
     days: {},
   }));
@@ -91,35 +103,48 @@ after(() => {
 const get = async (path) => (await fetch(base + path)).json();
 const post = (path, body, headers = {}) => fetch(base + path, { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body) });
 
-test("overview and ticket list show each ticket at its station", async () => {
+test("overview and ticket list show each ticket in its phase", async () => {
   const [app] = await get("/api/overview");
   assert.equal(app.name, "notes");
-  assert.deepEqual(app.tally, { merged: 1, blocked: 1, queued: 1 });
+  assert.deepEqual(app.tally, { merged: 1, blocked: 1, queued: 1, review: 1 });
   assert.equal(app.today.runs, 2);
   assert.equal(app.today.usd, 2.75);
   const list = await get("/api/apps/notes/tickets");
-  const brief = Object.fromEntries(list.map((item) => [item.id, [item.status, item.station, item.title]]));
-  assert.deepEqual(brief["001-count"], ["merged", 7, "Note count"]);
-  assert.deepEqual(brief["002-export"].slice(0, 1), ["blocked"]);
+  const brief = Object.fromEntries(list.map((item) => [item.id, [item.status, item.phase, item.title]]));
+  assert.deepEqual(brief["001-count"], ["merged", 5, "Note count"]);
+  assert.deepEqual(brief["002-export"], ["blocked", 2, "Export notes"]);
   assert.deepEqual(brief["003-search"], ["queued", 0, "Search"]);
+  assert.deepEqual(brief["NOT-4"], ["review", 4, "Short id"]);
   assert.equal(list.find((item) => item.id === "002-export").reason, "Change touches protected files: biome.json");
 });
 
-test("a ticket shows its timeline, who did what, skills, helper agents and the verdict", async () => {
+test("a ticket is laid out by phase: plan, design note, build, test files, deploy", async () => {
   const detail = await get("/api/apps/notes/tickets/001-count");
   assert.deepEqual(detail.timeline.map((event) => event.text), ["started: Branch agent/001-count", "attempt 1 · gates passed", "ready to merge (PASS)"]);
-  assert.match(detail.verdictText, /VERDICT: PASS/);
-  const [builder, verifier] = detail.runs;
-  assert.equal(builder.report, "Built the count.");
-  assert.deepEqual(builder.activity.skills, ["pstack:poteto-mode", "playbook: feature"]);
+  const { Plan, Design, Build, Test, Deploy } = detail.phases;
+  assert.match(Plan.text, /^# Note count/);
+  assert.equal(Plan.origin, "You");
+  assert.equal(Design.note, "");
+  assert.equal(Build.note, "Built the count.");
+  assert.match(Test.verdict, /VERDICT: PASS/);
+  assert.equal(Test.runs.length, 1);
+  assert.ok(Deploy.merged.commit);
+  assert.deepEqual(detail.skills.Build, ["pstack:poteto-mode", "playbook: feature"]);
+  const [builder] = Build.runs;
   assert.deepEqual(builder.activity.tools, { Read: 1, Agent: 1, Edit: 1, Bash: 1 });
   assert.deepEqual(builder.activity.files, ["public/index.html"]);
   assert.deepEqual(builder.activity.commands.map((command) => command.text), ["npm run gates"]);
-  assert.equal(builder.activity.subagents.length, 1);
   assert.equal(builder.activity.subagents[0].description, "Explore the page");
   assert.deepEqual(builder.activity.subagents[0].models, ["claude-haiku-5"]);
-  assert.deepEqual(builder.activity.subagents[0].tools, { Grep: 1 });
-  assert.equal(verifier.activity, undefined);
+  assert.equal(Test.runs[0].activity, undefined);
+
+  const phased = await get("/api/apps/notes/tickets/NOT-4");
+  assert.equal(phased.phases.Design.note.trim(), "Chose the simple shape.");
+  assert.equal(phased.phases.Build.note.trim(), "Did it.");
+  assert.match(phased.phases.Test.gates, /gates: ok/);
+  assert.match(phased.phases.Test.verdict, /VERDICT: PASS/);
+  assert.equal(phased.phases.Deploy.ready, true);
+  assert.equal(phased.phases.Deploy.merged, undefined);
   assert.equal((await fetch(`${base}/api/apps/notes/tickets/999-nope`)).status, 404);
   assert.equal((await fetch(`${base}/api/apps/elsewhere/tickets`)).status, 404);
 });

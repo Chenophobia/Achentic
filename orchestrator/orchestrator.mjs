@@ -1,11 +1,12 @@
 #!/usr/bin/env node
-import { existsSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { beat } from "./lib/heartbeat.mjs";
 import { queue, runOnce } from "./lib/pipeline.mjs";
 import { git } from "./lib/proc.mjs";
 import { openState } from "./lib/state.mjs";
+import { isJudged } from "../sensors/lib/tickets.mjs";
 
 const MINUTE = 60_000;
 const USAGE = `usage: orchestrator.mjs <run|status|retry <ticket-id>> --repo <path>`;
@@ -43,7 +44,7 @@ function status(config, state) {
   console.log(`ready: ${queue(config, state).join(", ") || "none"}`);
   for (const [id, entry] of Object.entries(state.tickets)) {
     const detail = entry.status === "review" ? entry.verdict : entry.reason.split("\n")[0];
-    const merged = entry.status === "review" && existsSync(join(config.repo, "docs/verdicts", `verdict-${id}.md`));
+    const merged = entry.status === "review" && isJudged(config.repo, id);
     console.log(`${id}: ${merged ? "merged" : entry.status} on ${entry.branch} — ${detail}`);
   }
 }

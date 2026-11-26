@@ -27,6 +27,13 @@ Enforced by gates, listed here so the first attempt passes:
 - No unused files, exports or dependencies. No copy-pasted blocks.
 - Imports use the `.ts` extension.
 
+## Notes every ticket leaves
+
+The orchestrator names two files in its prompt, under `docs/work/<ticket>/`. Write them; the branch check sends the work back without them.
+
+- `2-design/design.md`, before changing code: what you found, the shapes you considered, the one you chose and why, files you expect to touch, risks.
+- `3-build/report.md`, when done: what changed and why, how you proved it, gate failures and how you resolved them, what you could not verify.
+
 ## Tickets
 
 Goal, pass/fail done-check, proof wanted, known facts, real constraints. See `tickets/TEMPLATE.md`.

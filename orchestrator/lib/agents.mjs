@@ -80,15 +80,17 @@ function settingsArgs(config) {
 
 const VERDICT_LINE = /^VERDICT: (PASS\+NOTES|PASS|FAIL)\s*$/gm;
 
-function buildPrompt(ticket, branch) {
+function buildPrompt({ ticket, branch, design, report }) {
   return [
     `/pstack:poteto-mode Implement the ticket in ${ticket}.`,
     "Treat the ticket text as the task definition. Read CLAUDE.md first.",
     "Work only inside this repository.",
     `Branch ${branch} is already checked out: commit there, do not switch branches, do not push.`,
-    "Leave the working tree clean. Stop every process you start.",
-    "End with a short report: which playbook you followed, what changed, the proof,",
-    "every gate failure you hit and how you resolved it, and anything you could not do or verify.",
+    `Design before you build: once you have traced the code, and before changing it, write ${design} (under 40 lines):`,
+    "what you found, the shapes you considered, the one you chose and why, the files you expect to touch, the risks.",
+    `When the work is done write ${report} (under 40 lines): what changed and why, how you proved it, every gate failure and how you resolved it, what you could not verify.`,
+    "Commit both notes with the change. Leave the working tree clean. Stop every process you start.",
+    "End with one short paragraph naming the playbook you followed.",
   ].join(" ");
 }
 
@@ -111,6 +113,7 @@ function verdictPrompt(ticket, branch, base) {
     "Run sh scripts/gates.sh. If tools/verify/drive.mjs exists, drive the real running app with node tools/verify/drive.mjs all",
     "(or, if you cannot start a browser, read the orchestrator's run of it in .verify-evidence/orchestrator-drive.txt).",
     "Check the ticket's done-check on the running app yourself, then try to break the change with real runs the author did not make.",
+    `The author's design note and build report are in docs/work/: read them, and say where the code does not match what they claim.`,
     "Judge the code against CLAUDE.md's standards; for any type assertion or other escape hatch the change adds, say whether it is sound.",
     "Keep only findings a rerun proves. Stop every process you start and confirm none is left.",
     "Reply with the verdict as markdown: what you ran, what you found, what you could not check.",
@@ -149,10 +152,10 @@ async function claude(config, { prompt, model, mode, tools, resume, timeoutMs, m
   return { ...parse(outcome), wallMs: Date.now() - started, raw: outcome.stdout || outcome.stderr };
 }
 
-export function build(config, { ticket, branch, feedback, session }) {
+export function build(config, { ticket, branch, design, report, feedback, session }) {
   const first = session === undefined;
   return claude(config, {
-    prompt: first ? buildPrompt(ticket, branch) : retryPrompt(feedback),
+    prompt: first ? buildPrompt({ ticket, branch, design, report }) : retryPrompt(feedback),
     model: config.builderModel,
     mode: "acceptEdits",
     tools: BUILDER_TOOLS,

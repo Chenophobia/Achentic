@@ -38,6 +38,7 @@ Deploying on the Mac mini from start to finish: [Deploy on Mac mini.pptx](Deploy
 | [docs/05-unverified.md](docs/05-unverified.md) | Open questions and the log of every test run |
 | [docs/06-which-tool-when.md](docs/06-which-tool-when.md) | pstack vs Pocock, decided |
 | [docs/07-code-standards.md](docs/07-code-standards.md) | Standards, enforcers, CI |
+| [docs/08-phases.md](docs/08-phases.md) | The six phases, what each saves, where pstack sits in each, how tickets are named |
 | [orchestrator/](orchestrator) | The script that runs the loop: one ticket per run, retries, verdict, launchd installer, tests |
 | [mission-control/](mission-control) | One page for all projects: what runs now, every ticket's stations and full history (agents, skills, helper agents, cost), and a form to file tickets |
 | [intake/](intake) | GitHub issues in, Discord progress out: create work and follow it from anywhere |

@@ -15,8 +15,8 @@ Then open http://localhost:4400.
 | Part | Shows |
 |---|---|
 | Working now | For each project with a run in progress: the ticket, the step it is at, how long it has run, the agent's last action, how many helper agents are at work |
-| Tickets | Every ticket of every project on a line of eight stations: Queued, Building, Checks, Gates, Browser, Verdict, Ready, Merged. Blocked tickets show why |
-| A ticket | What happened, step by step with times. Who did what: builder and verifier per attempt, with model, duration, cost, the skills and playbooks they loaded, tools used, files written, commands run, the helper agents they started and what those did. The builder's report, the verdict in full, the files changed, the ticket text |
+| Tickets | Every ticket of every project, by short id and title, on a line of six phases: Plan, Design, Build, Test, Deploy, Maintain. Blocked tickets show the phase and the reason |
+| A ticket | One section per phase, each with the files that phase saved and the pstack skills loaded there. Plan: the ticket and who asked. Design: the builder's design note. Build: the builder per attempt with model, duration, cost, tools, files written, commands, helper agents and what they did; its report; files changed. Test: gate output, browser output, the verifier, the verdict. Deploy: merged or waiting for you. Maintain: what the sensors said since the merge. Then every step in order with times |
 | New ticket | A form: title, goal, done-check, proof wanted, known |
 | Top line | Agent runs and cost today and over seven days, across all projects |
 

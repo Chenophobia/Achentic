@@ -8,7 +8,7 @@ app ── unexpected error ──► GlitchTip (groups, counts)
           errors sensor ───────┘ reads open issues every hour
                │ new issue
                ▼
-        tickets/ready/NNN-error-<issue>.md ──► orchestrator ──► you merge
+        tickets/ready/<ID>.md "Live error: …" ──► orchestrator ──► you merge
                ▲
                └─ ticket judged ──► sensor marks the issue resolved;
                                     if the error returns, a new ticket says so
@@ -61,7 +61,7 @@ What one run does:
 1. Takes the orchestrator's lock for that app; skips if it is busy.
 2. For every earlier ticket that now has a verdict file, marks its GlitchTip issue resolved.
 3. Reads the project's unresolved issues.
-4. For each one not yet ticketed, oldest first: reads the latest event, writes `tickets/ready/NNN-error-<issue>.md` with the error and its top stack frames, commits it, alerts.
+4. For each one not yet ticketed, oldest first: reads the latest event, writes a ticket titled "Live error: <error>" with the error and its top stack frames, commits it, alerts.
 5. Stops at the daily cap.
 
 | Setting | Default | Variable |

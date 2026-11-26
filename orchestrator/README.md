@@ -25,16 +25,20 @@ The app repo is a clone that belongs to the orchestrator. It must be on the base
 
 To queue work, commit a ticket to `tickets/ready/` on the base branch. The lowest number goes first.
 
+## Ticket names and files
+
+A ticket is `tickets/ready/<ID>.md`, where the id is the project's initials and a number (`TN-6`). The orchestrator numbers tickets that come from mission control; name one you write by hand the same way, with the next free number. Its title is the first heading in the file. Everything the ticket produces is saved by phase under `docs/work/<ID>/` on its branch. See [docs/08-phases.md](../docs/08-phases.md).
+
 ## What one run does
 
 1. Takes a lock. A lock whose process is dead is cleared.
 2. Skips if the tree is dirty, the repo is off the base branch, or the daily cap is reached.
 3. Creates `agent/<ticket-id>` from the base branch.
 4. Runs the builder: `claude -p "/pstack:poteto-mode …"` on the ticket.
-5. Checks the branch: there is a commit, the tree is clean, no protected file changed.
+5. Checks the branch: there is a commit, the tree is clean, no protected file changed, and the builder's design note and build report exist.
 6. Runs the gates, then `tools/verify/drive.mjs all` if the app has it.
 7. Runs the verifier in a new process with a different model. It cannot edit; if the repository changed while it ran, the verdict is void.
-8. On PASS or PASS+NOTES: saves the verdict to `docs/verdicts/verdict-<ticket-id>.md`, commits it on the branch, marks the ticket `review`. The ticket file is not moved; once the branch is merged, the verdict file on the base branch is what keeps the ticket out of the queue.
+8. On PASS or PASS+NOTES: saves the ticket, the gate output, the browser output and the verdict under `docs/work/<ID>/`, commits them on the branch, marks the ticket `review`. Once the branch is merged, the verdict file on the base branch is what keeps the ticket out of the queue.
 9. On a failed check, gate, verify or verdict: resumes the builder's session with the finding and tries again, three attempts in total.
 10. Returns to the base branch, stashing anything left behind, and notifies.
 

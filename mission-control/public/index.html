@@ -85,6 +85,19 @@
   .agent dl { display: grid; grid-template-columns: 7rem 1fr; gap: 0.25rem 0.8rem; margin: 0.6rem 0 0; }
   .agent dt { color: var(--muted); }
   .agent dd { margin: 0; }
+  .key { display: inline-block; min-width: 3.6rem; margin-right: 0.6rem; font-weight: 600; }
+  .small { font-size: 0.84rem; }
+  section.phase { margin: 0; padding: 0.9rem 0 0.9rem 1.1rem; border-left: 3px solid var(--line); }
+  section.phase.done { border-left-color: var(--ink); }
+  section.phase.now { border-left-color: var(--run); }
+  section.phase.stopped { border-left-color: var(--stop); }
+  section.phase h3 { margin: 0 0 0.4rem; padding: 0; border: 0; display: flex; align-items: baseline; gap: 0.6rem; }
+  section.phase h3 .n { font-family: var(--code); font-size: 0.8rem; color: var(--muted); }
+  section.phase h3 .state { font-family: var(--body); font-weight: 400; font-size: 0.84rem; color: var(--muted); }
+  section.phase.now h3 .state { color: #8a5c00; } section.phase.stopped h3 .state { color: var(--stop); }
+  section.phase.later { opacity: 0.6; }
+  .used { margin: 0 0 0.5rem; font-size: 0.86rem; color: var(--muted); }
+  .sheet h3.plain { margin-top: 1.6rem; }
   .chip { display: inline-block; border: 1px solid var(--ink); padding: 0 0.45rem; margin: 0 0.3rem 0.25rem 0; font-size: 0.84rem; }
   .helpers { margin: 0.5rem 0 0; padding-left: 1.1rem; }
   .helpers li { margin-bottom: 0.3rem; }
@@ -162,8 +175,8 @@
 </dialog>
 
 <script>
-const STATIONS = ["Queued", "Building", "Checks", "Gates", "Browser", "Verdict", "Ready", "Merged"];
-const WORDS = { waiting: "Waiting for the orchestrator", queued: "Queued", building: "Building", review: "Ready to merge", merged: "Merged", blocked: "Blocked", done: "Done earlier" };
+const PHASES = ["Plan", "Design", "Build", "Test", "Deploy", "Maintain"];
+const WORDS = { waiting: "Waiting for the orchestrator", queued: "Queued", building: "In progress", review: "Ready to merge", merged: "Merged", blocked: "Blocked", done: "Done earlier" };
 const view = { apps: [], app: null, tickets: [], open: null };
 
 function el(tag, props = {}, ...children) {
@@ -206,12 +219,24 @@ function span(start, end) {
 }
 
 function track(ticket) {
-  const line = el("div", { class: `track ${ticket.status}`, role: "img", "aria-label": `${WORDS[ticket.status]}, at ${STATIONS[ticket.station]}` });
-  STATIONS.forEach((_, index) => {
-    if (index > 0) line.append(el("b", { class: index <= ticket.station ? "done" : "" }));
-    line.append(el("i", { class: index < ticket.station ? "done" : index === ticket.station ? "done here" : "" }));
+  const line = el("div", { class: `track ${ticket.status}`, role: "img", "aria-label": `${WORDS[ticket.status]}, in ${PHASES[ticket.phase]}` });
+  const finished = ticket.status === "merged" || ticket.status === "done";
+  PHASES.forEach((_, index) => {
+    if (index > 0) line.append(el("b", { class: index <= ticket.phase ? "done" : "" }));
+    line.append(el("i", { class: finished || index < ticket.phase ? "done" : index === ticket.phase ? "done here" : "" }));
   });
   return line;
+}
+
+function phaseWord(ticket) {
+  if (ticket.status === "merged" || ticket.status === "done" || ticket.status === "waiting") return WORDS[ticket.status];
+  if (ticket.status === "review") return "Tested, ready to merge";
+  if (ticket.status === "blocked") return `Blocked in ${PHASES[ticket.phase]}`;
+  return ticket.status === "queued" ? "Planned, queued" : `${PHASES[ticket.phase]} in progress`;
+}
+
+function label(ticket) {
+  return /^\d{13}-/.test(ticket.id) ? "new" : ticket.id;
 }
 
 function renderProjects() {
@@ -238,8 +263,8 @@ function renderNow() {
     return;
   }
   box.replaceChildren(...busy.map((app) => el("div", { class: "now" },
-    el("div", { class: "step" }, el("span", { class: "pulse" }), app.now.step),
-    el("div", {}, el("span", { class: "id" }, app.now.ticket), ` in ${app.name}, running for ${ago(app.now.since)}`),
+    el("div", { class: "step" }, el("span", { class: "pulse" }), `${app.now.phase}: ${app.now.title}`),
+    el("div", {}, el("span", { class: "id" }, app.now.ticket), ` in ${app.name}, running for ${ago(app.now.since)}. ${app.now.step}`),
     app.now.action ? el("div", { class: "muted" }, `Last action ${ago(app.now.action.at)} ago: ${app.now.action.tool} ${app.now.action.text}`, app.now.action.subagents ? `, ${app.now.action.subagents} helper agent(s) at work` : "") : null,
     el("button", { class: "close", style: "float:none;margin-top:.5rem", onclick: () => openTicket(app.name, app.now.ticket) }, "Open ticket"),
   )));
@@ -255,8 +280,8 @@ function renderRows() {
     return;
   }
   rows.replaceChildren(...list.map((ticket) => el("button", { class: "row", onclick: () => openTicket(ticket.app, ticket.id) },
-    el("div", { style: "min-width:0" }, el("div", { class: "title" }, ticket.title), el("div", { class: "id muted" }, view.app ? "" : `${ticket.app} / `, ticket.id.replace(/^(\d{13})-/, "new: "))),
-    el("div", {}, track(ticket), el("div", { class: `word ${ticket.status}` }, WORDS[ticket.status], ticket.status === "blocked" && ticket.reason ? `: ${ticket.reason.slice(0, 60)}` : "", ticket.verdict && ticket.status !== "blocked" ? ` (${ticket.verdict})` : "")),
+    el("div", { style: "min-width:0" }, el("div", { class: "title" }, el("span", { class: "id key" }, label(ticket)), ticket.title), view.app ? null : el("div", { class: "muted small" }, ticket.app)),
+    el("div", {}, track(ticket), el("div", { class: `word ${ticket.status}` }, phaseWord(ticket), ticket.status === "blocked" && ticket.reason ? `: ${ticket.reason.slice(0, 50)}` : "")),
     el("div", { class: "meta" }, ticket.cost ? money(ticket.cost) : "", el("div", {}, ticket.updatedAt ? `${day(ticket.updatedAt)} ${clock(ticket.updatedAt)}` : "")),
   )));
 }
@@ -292,20 +317,42 @@ async function openTicket(app, id) {
   try {
     const ticket = await call(`/api/apps/${encodeURIComponent(app)}/tickets/${encodeURIComponent(id)}`);
     if (view.open?.id !== id) return;
+    const p = ticket.phases;
+    const state = (index) => (ticket.status === "merged" || ticket.status === "done" || index < ticket.phase ? "done" : index === ticket.phase ? (ticket.status === "blocked" ? "stopped" : ticket.status === "building" ? "now" : "next") : "later");
+    const section = (index, ...body) => el("section", { class: `phase ${state(index)}` },
+      el("h3", {}, el("span", { class: "n" }, String(index + 1)), PHASES[index], el("span", { class: "state" }, { done: "done", now: "in progress", stopped: "stopped here", next: "next", later: "" }[state(index)])),
+      ticket.skills[PHASES[index]]?.length ? el("p", { class: "used" }, "pstack used here: ", ticket.skills[PHASES[index]].map((skill) => el("span", { class: "chip" }, skill))) : null,
+      body);
+    const file = (name, text, open) => (text ? el("details", { open }, el("summary", {}, name), el("pre", {}, text)) : null);
     sheet.replaceChildren(...[
       el("button", { class: "close", onclick: closeTicket }, "Close"),
-      el("div", { class: "id muted" }, `${app} / ${ticket.id}`),
+      el("div", { class: "id muted" }, `${app} / ${label(ticket)}`),
       el("h2", {}, ticket.title),
-      el("div", { class: `word ${ticket.status}`, style: "margin:.3rem 0 .7rem" }, WORDS[ticket.status], ticket.verdict ? ` (${ticket.verdict})` : "", ticket.attempts ? ` · ${ticket.attempts} attempt(s) · ${money(ticket.cost)}` : "", ticket.branch ? ` · branch ${ticket.branch}` : ""),
+      el("div", { class: `word ${ticket.status}`, style: "margin:.3rem 0 .7rem" }, phaseWord(ticket), ticket.verdict ? ` (${ticket.verdict})` : "", ticket.attempts ? ` · ${ticket.attempts} attempt(s) · ${money(ticket.cost)}` : ""),
       track(ticket),
-      el("div", { class: "stations" }, STATIONS.map((name) => el("span", {}, name))),
-      ticket.status === "blocked" ? el("div", { class: "why" }, el("strong", {}, "Why it stopped"), el("pre", {}, ticket.reason ?? "No reason recorded."), el("button", { onclick: () => retryTicket(app, id) }, "Put it back in the queue")) : null,
-      ticket.status === "waiting" ? el("p", { class: "muted" }, "The orchestrator gives this a number and starts on it at its next run.") : null,
-      ticket.timeline.length ? [el("h3", {}, "What happened"), el("ol", { class: "timeline" }, ticket.timeline.map((event) => el("li", {}, el("time", {}, `${day(event.at)} ${clock(event.at)}`), el("span", {}, event.text))))] : null,
-      ticket.runs.length ? [el("h3", {}, "Who did what"), ticket.runs.map(agentCard)] : null,
-      ticket.changed?.length ? [el("h3", {}, "What changed"), el("pre", {}, ticket.changed.join("\n"))] : null,
-      ticket.verdictText ? [el("h3", {}, "Verdict"), el("pre", {}, ticket.verdictText)] : null,
-      el("h3", {}, "The ticket"), el("pre", {}, ticket.text || "The ticket file is not on this checkout."),
+      el("div", { class: "stations" }, PHASES.map((name) => el("span", {}, name))),
+      ticket.status === "blocked" ? el("div", { class: "why" }, el("strong", {}, `Why it stopped in ${PHASES[ticket.phase]}`), el("pre", {}, ticket.reason ?? "No reason recorded."), el("button", { onclick: () => retryTicket(app, id) }, "Put it back in the queue")) : null,
+      section(0,
+        el("p", { class: "muted" }, `Asked for by: ${p.Plan.origin}.`, ticket.status === "waiting" ? " The orchestrator gives it a number and starts at its next run." : ""),
+        file("ticket.md", p.Plan.text, true)),
+      p.Design ? section(1, p.Design.note ? file("design.md", p.Design.note, ticket.phase <= 2) : el("p", { class: "muted" }, ticket.phase > 1 ? "No design note was saved for this ticket (it was built before notes were required)." : "The builder writes its design note here before it changes any code.")) : null,
+      p.Build ? section(2,
+        p.Build.runs.map(agentCard),
+        file("report.md", p.Build.note, false),
+        p.Build.changed.length ? file("Files changed", p.Build.changed.join("\n"), false) : null,
+        p.Build.runs.length === 0 && !p.Build.note ? el("p", { class: "muted" }, "Nothing built yet.") : null) : null,
+      p.Test ? section(3,
+        file("gates.txt", p.Test.gates, false),
+        file("browser.txt", p.Test.browser, false),
+        p.Test.runs.map(agentCard),
+        file("verdict.md", p.Test.verdict, ticket.phase === 4),
+        !p.Test.gates && !p.Test.verdict && p.Test.runs.length === 0 ? el("p", { class: "muted" }, "Gates, the browser check and the second agent's verdict land here.") : null) : null,
+      p.Deploy ? section(4,
+        p.Deploy.merged ? el("p", {}, `Merged ${day(p.Deploy.merged.at)} ${clock(p.Deploy.merged.at)} as `, el("span", { class: "id" }, p.Deploy.merged.commit), `. ${p.Deploy.merged.subject}`) : p.Deploy.ready ? el("p", {}, "Waiting for you: read the verdict, then merge ", el("span", { class: "id" }, p.Deploy.branch), " and push.") : el("p", { class: "muted" }, "Not reached yet."),
+        el("p", { class: "muted" }, "Merging, pushing and restarting the app are done by you. GitHub Actions reruns the gates after the push.")) : null,
+      p.Maintain ? section(5,
+        p.Maintain.sensors.length ? el("ol", { class: "timeline" }, p.Maintain.sensors.map((event) => el("li", {}, el("time", {}, `${day(event.at)} ${clock(event.at)}`), el("span", {}, event.text)))) : el("p", { class: "muted" }, ticket.status === "merged" ? "No sensor has reported on this project since the merge." : "After the merge, the live check, the error tracker and the uptime check watch the running app.")) : null,
+      ticket.timeline.length ? [el("h3", { class: "plain" }, "Every step, in order"), el("ol", { class: "timeline" }, ticket.timeline.map((event) => el("li", {}, el("time", {}, `${day(event.at)} ${clock(event.at)}`), el("span", {}, event.text))))] : null,
     ].flat(Infinity).filter(Boolean));
   } catch (error) {
     sheet.replaceChildren(el("button", { class: "close", onclick: closeTicket }, "Close"), el("p", { class: "error" }, error.message));

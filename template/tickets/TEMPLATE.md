@@ -15,4 +15,4 @@
 
 ## Constraints
 - Do not edit gate or CI configuration.
-- Commit locally on a branch named `agent/<number>-<slug>`. Do not push.
+- Commit locally on the branch the orchestrator checked out. Do not push.

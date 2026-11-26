@@ -65,7 +65,10 @@ test("passing change ends in review with the verdict recorded on the branch", as
   assert.equal(state.tickets["001-thing"].verdict, "PASS");
   const files = git(repo, "ls-tree", "-r", "--name-only", "agent/001-thing");
   assert.match(files, /tickets\/ready\/001-thing\.md/);
-  assert.match(files, /docs\/verdicts\/verdict-001-thing\.md/);
+  for (const file of ["1-plan/ticket.md", "2-design/design.md", "3-build/report.md", "4-test/gates.txt", "4-test/verdict.md"]) {
+    assert.ok(files.includes(`docs/work/001-thing/${file}`), file);
+  }
+  assert.match(git(repo, "show", "agent/001-thing:docs/work/001-thing/4-test/gates.txt"), /^\$ sh scripts\/gates\.sh[\s\S]*exit 0/);
   assert.equal(await runOnce(config, state), "idle");
 });
 
@@ -117,7 +120,7 @@ test("every step of a ticket is announced, in order", async () => {
   const fix = { remove: ["bad"], commit: true };
   const { config, state } = setup([{ write: { bad: "x" }, commit: true }, fix, PASS]);
   const said = [];
-  await runOnce(config, { ...state, log: (line) => said.push(line.replace(/^app 001-thing: /, "")) });
+  await runOnce(config, { ...state, log: (line) => said.push(line.replace(/^001-thing Thing: /, "")) });
   assert.deepEqual(
     said.map((line) => line.split(": ")[0].replace(/ · /g, " | ")),
     [
@@ -136,16 +139,26 @@ test("every step of a ticket is announced, in order", async () => {
 });
 
 test("an idea left in the inbox becomes a numbered, committed ticket and is built", async () => {
-  const { repo, config, state } = setup([GOOD, PASS, GOOD]);
+  const { repo, config, state } = setup([GOOD, PASS, GOOD, PASS]);
   mkdirSync(join(state.dir, "inbox"), { recursive: true });
   writeFileSync(join(state.dir, "inbox/1700000000000-dark-mode.md"), "# Dark mode\n\n## Goal\nA dark page.\n");
   assert.equal(await runOnce(config, state), "review");
   assert.equal(state.tickets["001-thing"].status, "review");
-  const text = readFileSync(join(repo, "tickets/ready/002-dark-mode.md"), "utf8");
+  const text = readFileSync(join(repo, "tickets/ready/APP-2.md"), "utf8");
   assert.match(text, /^# Dark mode/);
-  assert.match(text, /agent\/002-dark-mode/);
+  assert.match(text, /agent\/APP-2/);
+  assert.equal(await runOnce(config, state), "review");
+  assert.equal(state.tickets["APP-2"].status, "review");
   assert.equal(readdirSync(join(state.dir, "inbox")).length, 0);
   assert.equal(git(repo, "status", "--porcelain"), "");
+});
+
+test("a builder that skips its design or build note is sent back for them", async () => {
+  const bare = { write: { "feature.txt": "x" }, commit: true, noNotes: true };
+  const { config, state, calls } = setup([bare, { commit: true }, PASS]);
+  assert.equal(await runOnce(config, state), "review");
+  assert.match(calls()[1][1], /notes are missing[\s\S]*docs\/work\/001-thing\/2-design\/design\.md, docs\/work\/001-thing\/3-build\/report\.md/);
+  assert.match(calls()[0][1], /Design before you build/);
 });
 
 test("gate failure goes back to the same builder session with the output", async () => {

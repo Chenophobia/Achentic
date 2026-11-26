@@ -14,11 +14,6 @@ async function openIssues(config) {
   return response.json();
 }
 
-function slug(title) {
-  const words = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-  return words.slice(0, 40).replace(/-+$/, "") || "issue";
-}
-
 function ticketText(id, issue) {
   const body = String(issue.body ?? "").trim() || "No description was given. Ask for one in the report instead of guessing.";
   return `# ${issue.title}
@@ -59,10 +54,10 @@ export async function intake(config, state) {
     if (fresh.length === 0) return "ok";
     if (git(config.repo, "branch", "--show-current") !== config.base) return "deferred";
     for (const issue of fresh) {
-      const id = nextId(config.repo, slug(issue.title));
-      commitTicket(config.repo, id, ticketText(id, issue), `Ticket ${id} from issue #${issue.number}`);
+      const id = nextId(config.repo);
+      commitTicket(config.repo, id, ticketText(id, issue), `${id}: ${issue.title} (from issue #${issue.number})`);
       memory.data.seen[issue.number] = id;
-      await notify(config, state, `${name} ${id}: queued`, `From issue #${issue.number}: ${issue.title}`);
+      await notify(config, state, `${id} ${issue.title}: queued`, `Project ${name}, from issue #${issue.number}`);
     }
     return "ticket";
   } catch (error) {

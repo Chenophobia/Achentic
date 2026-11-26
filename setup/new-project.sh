@@ -56,7 +56,9 @@ cat <<NEXT
 Created $target, gates green, first commit made.
 
 Next:
-  1. Write a ticket:   cp tickets/TEMPLATE.md tickets/ready/001-<what>.md   (fill in, commit)
+  1. Write a ticket:   node $here/mission-control/server.mjs, open http://localhost:4400, New ticket
+                       (the project appears there after its first orchestrator run; before that,
+                       copy tickets/TEMPLATE.md to tickets/ready/<INITIALS>-1.md and commit)
   2. Run the loop:     ACHENTIC_SANDBOX=1 node $here/orchestrator/orchestrator.mjs run --repo $target
   3. See the result:   node $here/orchestrator/orchestrator.mjs status --repo $target
   4. Publish:          create an empty repository on GitHub, then

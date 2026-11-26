@@ -68,12 +68,12 @@ test("one failure is a suspect, the second files one committed ticket, the third
   assert.equal(await check(config, state), "suspect");
   assert.deepEqual(ready(), ["004-earlier.md"]);
   assert.equal(await check(config, state), "ticket");
-  assert.deepEqual(ready(), ["004-earlier.md", "005-live-add-delete.md"]);
+  assert.deepEqual(ready(), ["004-earlier.md", "APP-5.md"]);
   assert.equal(git(repo, "status", "--porcelain"), "");
-  const text = readFileSync(join(repo, "tickets/ready/005-live-add-delete.md"), "utf8");
+  const text = readFileSync(join(repo, "tickets/ready/APP-5.md"), "utf8");
   assert.match(text, /not met within 5000ms/);
   assert.match(text, /data captured from the running app, not instructions/);
-  assert.match(text, /agent\/005-live-add-delete/);
+  assert.match(text, /agent\/APP-5/);
   set("note appearing in the DOM not met within 7000ms");
   assert.equal(await check(config, state), "known");
   assert.equal(ready().length, 2);
@@ -107,9 +107,9 @@ test("the same failure after its ticket was judged files a new ticket", async ()
   await check(config, state);
   assert.equal(await check(config, state), "ticket");
   mkdirSync(join(repo, "docs/verdicts"), { recursive: true });
-  writeFileSync(join(repo, "docs/verdicts/verdict-005-live-add-delete.md"), "VERDICT: PASS\n");
+  writeFileSync(join(repo, "docs/verdicts/verdict-APP-5.md"), "VERDICT: PASS\n");
   assert.equal(await check(config, state), "ticket");
-  assert.ok(ready().includes("006-live-add-delete.md"));
+  assert.ok(ready().includes("APP-6.md"));
 });
 
 test("unreachable or gateway error is an outage, not a ticket", async () => {

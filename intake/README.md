@@ -9,7 +9,7 @@ Two things that let you work from anywhere, with no access to the Mac mini:
 you, anywhere ── GitHub issue with the label "agent"
                         │  read every 30 minutes, just before the orchestrator
                         ▼
-                 tickets/ready/NNN-<title>.md ──► orchestrator ──► branch for you to merge
+                 tickets/ready/<ID>.md ──► orchestrator ──► branch for you to merge
                         │                              │
                         └──────── Discord channel ◄────┘
      queued · started · building · gates passed · verdict PASS · ready to merge · blocked
@@ -52,16 +52,16 @@ The issue stays open. Close it yourself when you merge. Nothing writes back to G
 Set `ACHENTIC_DISCORD_WEBHOOK_URL` in the same env file. Then the orchestrator, the intake and the sensors post one line per event:
 
 ```
-my-app 004-note-count: queued              From issue #12: Note count in the heading
-my-app 004-note-count: started             Branch agent/004-note-count
-my-app 004-note-count: attempt 1 · building
-my-app 004-note-count: attempt 1 · branch checks passed
-my-app 004-note-count: attempt 1 · gates failed, sent back to the builder
-my-app 004-note-count: attempt 2 · building
-my-app 004-note-count: attempt 2 · gates passed
-my-app 004-note-count: attempt 2 · browser drive passed
-my-app 004-note-count: attempt 2 · verdict PASS
-my-app 004-note-count: ready to merge (PASS)
+MA-4 Note count in the heading: queued          Project my-app, from issue #12
+MA-4 Note count in the heading: started         Project my-app, branch agent/MA-4
+MA-4 Note count in the heading: attempt 1 · building
+MA-4 Note count in the heading: attempt 1 · branch checks passed
+MA-4 Note count in the heading: attempt 1 · gates failed, sent back to the builder
+MA-4 Note count in the heading: attempt 2 · building
+MA-4 Note count in the heading: attempt 2 · gates passed
+MA-4 Note count in the heading: attempt 2 · browser drive passed
+MA-4 Note count in the heading: attempt 2 · verdict PASS
+MA-4 Note count in the heading: ready to merge (PASS)
 ```
 
 A failed step carries the first lines of the reason. Sensors post when they file a ticket, when the app is unreachable and when it recovers.

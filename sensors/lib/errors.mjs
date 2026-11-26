@@ -40,11 +40,6 @@ function where(issue, event) {
   return issue.culprit || event.culprit || "not recorded";
 }
 
-function slug(issue) {
-  const name = String(issue.shortId ?? issue.id).toLowerCase().replace(/[^a-z0-9]+/g, "-");
-  return `error-${name}`.replace(/-+$/, "");
-}
-
 function ticketText(id, issue, event, again) {
   return `# Live error: ${issue.title}
 
@@ -96,11 +91,11 @@ function isNew(config, memory, issue) {
 async function fileOne(config, state, memory, issue, name) {
   const event = await api(config, `/api/0/issues/${issue.id}/events/latest/`);
   const again = memory.data.seen[issue.id]?.resolved === true;
-  const id = nextId(config.repo, slug(issue));
+  const id = nextId(config.repo);
   commitTicket(config.repo, id, ticketText(id, issue, event, again), `Sensor ticket ${id}: live error`);
   memory.data.seen[issue.id] = { ticket: id, since: new Date().toISOString() };
   memory.data.days[today()] = (memory.data.days[today()] ?? 0) + 1;
-  await notify(config, state, `${name}: live error, ticket ${id} filed`, issue.title);
+  await notify(config, state, `${id} Live error: ${issue.title}: queued`, `Project ${name}, from the error tracker`);
 }
 
 async function fileNew(config, state, memory, issues, name) {

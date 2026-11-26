@@ -6,6 +6,8 @@ Fifteen minutes. What the system is, how the parts talk, what costs tokens, how 
 
 You write a ticket. A script hands it to an agent that builds it. Plain scripts check the code. A second agent, which did not write it, tries to break it. You read the verdict and merge. Sensors watch the live app and write tickets themselves when something breaks.
 
+Six phases — Plan, Design, Build, Test, Deploy, Maintain — and how tickets are named: [08-phases.md](08-phases.md).
+
 ## 2. Words
 
 | Word | Meaning |
@@ -40,11 +42,11 @@ You write a ticket. A script hands it to an agent that builds it. Plain scripts 
  YOU ── GitHub issue (label "agent") from anywhere, or a ticket file
                                │ intake, every 30 min
                                ▼
-                        app repo: tickets/ready/NNN-name.md
+                        app repo: tickets/ready/MA-1.md
                                │
                  every 30 min  ▼
                         ORCHESTRATOR (script, no AI)
-                               │ creates branch agent/NNN-name
+                               │ creates branch agent/MA-1
                                ▼
                  ┌──► BUILDER   claude -p, Sonnet, pstack      ◄── uses tokens
                  │             │ commits on the branch
@@ -58,7 +60,7 @@ You write a ticket. A script hands it to an agent that builds it. Plain scripts 
                  └──── VERIFIER claude -p, Opus, fresh process ◄── uses tokens
                                │ PASS: verdict file committed on the branch
                                ▼
- YOU ◄── Discord: every step ── branch agent/NNN-name is ready ── you merge, you push
+ YOU ◄── Discord: every step ── branch agent/MA-1 is ready ── you merge, you push
                                │
                                ▼
                         GITHUB ACTIONS runs the gates again     no tokens
@@ -80,7 +82,7 @@ Three rules hold it together:
 One command per agent. The orchestrator builds it; you never type it.
 
 ```sh
-claude -p "/pstack:poteto-mode Implement the ticket in tickets/ready/004-note-count.md. …" \
+claude -p "/pstack:poteto-mode Implement the ticket in tickets/ready/TN-4.md. …" \
   --model sonnet \
   --permission-mode acceptEdits \
   --allowedTools "Bash(node *)" "Bash(npm *)" "Bash(git *)" … \
@@ -144,12 +146,12 @@ Then per ticket:
 
 | Step | Command |
 |---|---|
-| Write a ticket | Mission control → New ticket. Or open a GitHub issue with the "Ticket for the agents" form, or copy `tickets/TEMPLATE.md` to `tickets/ready/001-name.md` and commit on `main` |
+| Write a ticket | Mission control → New ticket. Or open a GitHub issue with the "Ticket for the agents" form, or copy `tickets/TEMPLATE.md` to `tickets/ready/MA-1.md` and commit on `main` |
 | Run the loop once | `node orchestrator/orchestrator.mjs run --repo ~/work/my-app` |
 | See where things stand | `node orchestrator/orchestrator.mjs status --repo ~/work/my-app` |
-| Read the verdict | `docs/verdicts/verdict-001-name.md` on branch `agent/001-name` |
-| Accept | `git merge agent/001-name`, then push |
-| Try a blocked ticket again | `node orchestrator/orchestrator.mjs retry 001-name --repo ~/work/my-app` |
+| Read the verdict | `docs/work/MA-1/4-test/verdict.md` on branch `agent/MA-1`, or the ticket in mission control |
+| Accept | `git merge agent/MA-1`, then push |
+| Try a blocked ticket again | `node orchestrator/orchestrator.mjs retry MA-1 --repo ~/work/my-app` |
 
 Add `ACHENTIC_SANDBOX=1` in front of the run command to confine the agents.
 

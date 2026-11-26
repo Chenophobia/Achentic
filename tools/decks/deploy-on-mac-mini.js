@@ -227,10 +227,10 @@ stage(1, "Stage 1: the agent user and its login", [
 stage(2, "Stage 2: first project, first ticket by hand", [
   ["claude", "Create the project from the template", "sh setup/new-project.sh my-app"],
   ["you", "Create the empty GitHub repository, push main", "git remote add origin … && git push -u origin main"],
-  ["claude", "Write a ticket, commit it on main", "tickets/ready/001-first-thing.md"],
+  ["claude", "File the first ticket", "mission control → New ticket"],
   ["you", "As the agent: clone the app, run one ticket", "sh setup/agent-user/run-as-agent.sh orchestrator ~/work/my-app"],
   ["you", "Read the verdict, fetch the branch, merge, push", "git fetch /Users/agent/work/my-app 'refs/heads/agent/*:refs/remotes/agent/*'"],
-], ["The run ends in review or blocked, not an error", "docs/verdicts/verdict-001-….md exists on the branch", "GitHub Actions is green after your push"], ["orchestrator.mjs status --repo <app>", "~/.achentic/<app>/orchestrator.log", "~/.achentic/<app>/logs/*.json", "<app>/.verify-evidence/"]);
+], ["The run ends in review or blocked, not an error", "docs/work/<ID>/ holds design, report and verdict", "GitHub Actions is green after your push"], ["orchestrator.mjs status --repo <app>", "~/.achentic/<app>/orchestrator.log", "~/.achentic/<app>/logs/*.json", "<app>/.verify-evidence/"]);
 
 stage(3, "Stage 3: schedule the orchestrator", [
   ["you", "Install the job (runs as agent, no login needed)", "sudo sh setup/agent-user/install-daemon.sh agent orchestrator /Users/agent/work/my-app"],

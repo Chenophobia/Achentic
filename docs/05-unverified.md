@@ -380,6 +380,19 @@ Found while looking: nested lists rendered as `[object …]` in the ticket panel
 
 Not done: the "Working now" panel during a real run. No agent was started: the Claude CLI on this MacBook was logged into a work account on that day. Also not done: behind Cloudflare Access, the keep-running daemon, the retry button on a real blocked ticket.
 
+## Phases and short ticket ids — 2026-11-26
+
+Asked for by the owner: see the work in phases (plan, design, build, test, deploy, maintain) with each phase's files, and ticket names that read clearly.
+
+| Change | Check |
+|---|---|
+| Ids are the project's initials and a number (`TN-6`); the title is shown beside the id everywhere | Orchestrator, sensor and intake tests updated; old `004-note-count` style still accepted |
+| The builder must write `2-design/design.md` and `3-build/report.md`; the branch check sends it back without them | New test: a builder that skips them is sent back and passes on the second try |
+| On a pass the orchestrator saves ticket, gate output, browser output and verdict under `docs/work/<ID>/` | Test reads the five files from the branch |
+| Mission control: six-phase line per ticket, ticket page split by phase with its files and the pstack skills loaded | Tests updated (35 in all). Looked at with a demo project built by the fake agent: one merged, one blocked in Test, one blocked in Build |
+
+Not done: a real agent has not yet been asked to write the two notes. The prompt for it is untested on a real run; the Claude CLI on the test machine was still on a work login. `docs/08-phases.md` assigns pstack's skills to phases by reading their descriptions; pstack itself does not define phases.
+
 Also untested: the GitHub-issues poller sketch and gate script in [03-setup-runbook.md](03-setup-runbook.md). The CLI flags in them (`--permission-mode auto`, `--permission-prompts none`, `--max-turns`, `--bare`, `--max-budget-usd`) come from the docs as reported by researchers; confirm against `claude --help` on your install.
 
 The reconciliation of pstack with Pocock's skills is this project's own judgment. Neither author mentions the other.

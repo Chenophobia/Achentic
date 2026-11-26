@@ -62,7 +62,7 @@ function stillOpen(config, entry) {
 
 function fileTicket(config, state, failure, streak, output) {
   const { repo } = config;
-  const id = nextId(repo, `live-${failure.flow}`);
+  const id = nextId(repo);
   commitTicket(repo, id, ticketText(config, id, failure, streak, output), `Sensor ticket ${id}: live check failing`);
   const evidence = join(repo, ".verify-evidence");
   if (existsSync(evidence)) cpSync(evidence, join(state.dir, "sensor-evidence", id), { recursive: true });
@@ -106,7 +106,7 @@ async function onFail(config, state, memory, name, output) {
   const ticket = fileTicket(config, state, failure, memory.data.streak, output);
   memory.data.open[failure.fingerprint] = { ticket, seen: 1, since: new Date().toISOString() };
   memory.data.days[today()] = (memory.data.days[today()] ?? 0) + 1;
-  await notify(config, state, `${name}: live check failing, ticket ${ticket} filed`, failure.message);
+  await notify(config, state, `${ticket} Live check failing: ${failure.flow}: queued`, `Project ${name}. ${failure.message}`);
   return "ticket";
 }
 

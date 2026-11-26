@@ -79,9 +79,9 @@ test("a new error becomes one committed ticket with its stack, once", async () =
   const { repo, config, state, ready } = setup();
   tracker.issues = [issue("1", "TypeError: Cannot read properties of null")];
   assert.equal(await collect(config, state), "ticket");
-  assert.deepEqual(ready(), ["004-earlier.md", "005-error-notes-1.md"]);
+  assert.deepEqual(ready(), ["004-earlier.md", "APP-5.md"]);
   assert.equal(git(repo, "status", "--porcelain"), "");
-  const text = readFileSync(join(repo, "tickets/ready/005-error-notes-1.md"), "utf8");
+  const text = readFileSync(join(repo, "tickets/ready/APP-5.md"), "utf8");
   assert.match(text, /TypeError: Cannot read properties of null \(reading 'text'\)/);
   assert.match(text, /at createNote \(src\/server\.ts:38\)\n {2}at route \(src\/server\.ts:60\)/);
   assert.match(text, /3 events/);
@@ -95,7 +95,7 @@ test("oldest first, stops at the daily cap, quiet errors wait for more events", 
   const { config, state, ready } = setup();
   tracker.issues = [issue("3", "third"), issue("1", "first"), issue("2", "second"), issue("4", "rare", { count: "1" })];
   assert.equal(await collect({ ...config, minEvents: 2 }, state), "ticket");
-  assert.deepEqual(ready(), ["004-earlier.md", "005-error-notes-1.md", "006-error-notes-2.md"]);
+  assert.deepEqual(ready(), ["004-earlier.md", "APP-5.md", "APP-6.md"]);
   assert.equal(await collect({ ...config, minEvents: 2 }, state), "capped");
   assert.equal(ready().length, 3);
 });
@@ -105,13 +105,13 @@ test("a judged ticket resolves the tracker issue; if the error returns it is fil
   tracker.issues = [issue("1", "boom")];
   await collect(config, state);
   mkdirSync(join(repo, "docs/verdicts"), { recursive: true });
-  writeFileSync(join(repo, "docs/verdicts/verdict-005-error-notes-1.md"), "VERDICT: PASS\n");
+  writeFileSync(join(repo, "docs/verdicts/verdict-APP-5.md"), "VERDICT: PASS\n");
   assert.equal(await collect(config, state), "ok");
   assert.ok(tracker.calls.includes("PUT /api/0/issues/1/ Bearer secret-token"));
   assert.equal(ready().length, 2);
   tracker.issues = [issue("1", "boom")];
   assert.equal(await collect(config, state), "ticket");
-  const again = readFileSync(join(repo, "tickets/ready/006-error-notes-1.md"), "utf8");
+  const again = readFileSync(join(repo, "tickets/ready/APP-6.md"), "utf8");
   assert.match(again, /fixed once before and has come back/);
 });
 

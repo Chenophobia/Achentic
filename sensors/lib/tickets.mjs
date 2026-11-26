@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { git } from "../../orchestrator/lib/proc.mjs";
 
 export function today() {
@@ -12,18 +12,43 @@ export function openMemory(dir, name, initial) {
   return { data, save: () => writeFileSync(file, `${JSON.stringify(data, null, 2)}\n`) };
 }
 
+const TICKET_FILE = /^(?:(\d+)-.*|[A-Z][A-Z0-9]*-(\d+))\.md$/;
+
+export function ticketNumber(name) {
+  const match = name.endsWith(".md") ? name.match(TICKET_FILE) : `${name}.md`.match(TICKET_FILE);
+  return match ? Number(match[1] ?? match[2]) : undefined;
+}
+
 function ticketNumbers(dir) {
   if (!existsSync(dir)) return [];
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     if (entry.isDirectory()) return ticketNumbers(join(dir, entry.name));
-    const number = Number(entry.name.match(/^(\d+)-/)?.[1]);
-    return Number.isInteger(number) ? [number] : [];
+    const number = ticketNumber(entry.name);
+    return number === undefined ? [] : [number];
   });
 }
 
-export function nextId(repo, slug) {
+export function projectKey(repo) {
+  const words = basename(repo).split(/[^a-zA-Z0-9]+/).filter(Boolean);
+  const letters = words.length > 1 ? words.map((word) => word[0]).join("") : (words[0] ?? "T").slice(0, 3);
+  return letters.toUpperCase().replace(/^[^A-Z]+/, "") || "T";
+}
+
+export function nextId(repo) {
   const next = Math.max(0, ...ticketNumbers(join(repo, "tickets"))) + 1;
-  return `${String(next).padStart(3, "0")}-${slug}`;
+  return `${projectKey(repo)}-${next}`;
+}
+
+export function workDir(id) {
+  return `docs/work/${id}`;
+}
+
+export function verdictPaths(id) {
+  return [`${workDir(id)}/4-test/verdict.md`, `docs/verdicts/verdict-${id}.md`];
+}
+
+export function titleOf(text, fallback) {
+  return text.match(/^#\s+(.+)$/m)?.[1]?.trim() ?? fallback;
 }
 
 export function commitTicket(repo, id, text, subject) {
@@ -39,7 +64,7 @@ export function isQueued(repo, id) {
 }
 
 export function isJudged(repo, id) {
-  return existsSync(join(repo, "docs/verdicts", `verdict-${id}.md`));
+  return verdictPaths(id).some((path) => existsSync(join(repo, path)));
 }
 
 export function fenced(text) {
